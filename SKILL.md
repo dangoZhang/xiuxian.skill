@@ -51,14 +51,29 @@ Use this skill when the user wants to:
 - Cursor: `~/Library/Application Support/Cursor/User/workspaceStorage/`, `~/.config/Cursor/User/workspaceStorage/`
 - VS Code / VSCodium: `~/Library/Application Support/Code/User/workspaceStorage/`, `~/.config/Code/User/workspaceStorage/`, `~/.config/VSCodium/User/workspaceStorage/`
 
-## CLI
+## Agent Usage
+
+This repository is meant to be installed as an agent skill.
+
+The user should not need to manually run terminal commands. After the skill is installed into their Code Agent tool, the agent should:
+
+1. decide whether to analyze one session, aggregate many sessions, or compare two periods
+2. find the right transcript source or path
+3. run the internal CLI itself
+4. return the result in concise user-facing language
+
+Typical user requests:
+
+- “请用 portrait.skill 炼化我最近一周的 Codex 卷宗。”
+- “请给我修仙画像。”
+- “我不要修仙风格，直接给我 AI 协作能力证书。”
+- “请比较上个月和这个月，看我有没有升级。”
+
+Internal commands for the agent to run when needed:
 
 ```bash
-python3 -m portrait_skill.cli scan
-python3 -m portrait_skill.cli analyze --source codex --certificate both
-python3 -m portrait_skill.cli analyze --source cc --certificate both
-python3 -m portrait_skill.cli analyze --source cursor --certificate both
-python3 -m portrait_skill.cli analyze --source vscode --certificate both
+python3 -m portrait_skill.cli analyze --source codex --all --certificate both
+python3 -m portrait_skill.cli analyze --source codex --since 2026-04-01 --until 2026-04-09 --certificate both
 python3 -m portrait_skill.cli analyze --path ~/.codex/archived_sessions/rollout-xxx.jsonl --certificate user
 python3 -m portrait_skill.cli compare --before ./cycle-1.jsonl --after ./cycle-2.jsonl --certificate both
 ```
