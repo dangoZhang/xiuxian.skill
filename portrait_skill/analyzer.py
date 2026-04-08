@@ -28,6 +28,11 @@ AI_LEVELS = [
     (96, "破局宗师"),
 ]
 
+LEVEL_TABLES = {
+    "user": REALM_LEVELS,
+    "assistant": AI_LEVELS,
+}
+
 
 def analyze_transcript(transcript: Transcript) -> Analysis:
     user_messages = [item for item in transcript.messages if item.role == "user"]
@@ -68,6 +73,98 @@ def analyze_transcript(transcript: Transcript) -> Analysis:
         assistant_certificate=assistant_certificate,
         overview=overview,
     )
+
+
+def level_rank(track: str, level: str) -> int:
+    table = LEVEL_TABLES[track]
+    for index, (_, name) in enumerate(table):
+        if name == level:
+            return index
+    return -1
+
+
+def compare_analyses(before: Analysis, after: Analysis) -> dict[str, object]:
+    return {
+        "overview": (
+            f"对比两次会话：前次 {len(before.transcript.messages)} 条消息，"
+            f"本次 {len(after.transcript.messages)} 条消息。"
+        ),
+        "user": _compare_track(before, after, track="user"),
+        "assistant": _compare_track(before, after, track="assistant"),
+    }
+
+
+def _compare_track(before: Analysis, after: Analysis, track: str) -> dict[str, object]:
+    before_certificate = before.user_certificate if track == "user" else before.assistant_certificate
+    after_certificate = after.user_certificate if track == "user" else after.assistant_certificate
+    before_metrics = before.user_metrics if track == "user" else before.assistant_metrics
+    after_metrics = after.user_metrics if track == "user" else after.assistant_metrics
+
+    deltas = []
+    before_map = {item.name: item.score for item in before_metrics}
+    after_map = {item.name: item.score for item in after_metrics}
+    for name, before_score in before_map.items():
+        after_score = after_map.get(name, before_score)
+        deltas.append({"name": name, "before": before_score, "after": after_score, "delta": after_score - before_score})
+
+    deltas.sort(key=lambda item: item["delta"], reverse=True)
+    improved = [item for item in deltas if item["delta"] > 0]
+    regressed = [item for item in deltas if item["delta"] < 0]
+
+    before_rank = level_rank(track, before_certificate.level)
+    after_rank = level_rank(track, after_certificate.level)
+    score_delta = after_certificate.score - before_certificate.score
+
+    if after_rank > before_rank:
+        outcome = "破境成功"
+    elif after_rank == before_rank and score_delta > 0:
+        outcome = "境界未变，但功力上涨"
+    elif score_delta == 0:
+        outcome = "境界持平"
+    else:
+        outcome = "本轮未能突破"
+
+    return {
+        "title": before_certificate.title,
+        "outcome": outcome,
+        "before_level": before_certificate.level,
+        "after_level": after_certificate.level,
+        "before_score": before_certificate.score,
+        "after_score": after_certificate.score,
+        "score_delta": score_delta,
+        "top_improvements": improved[:3],
+        "top_regressions": regressed[:2],
+        "next_focus": _compare_next_focus(improved, regressed, after_metrics),
+    }
+
+
+def _compare_next_focus(improved: list[dict[str, int]], regressed: list[dict[str, int]], after_metrics: list[MetricScore]) -> list[str]:
+    lines: list[str] = []
+    if improved:
+        best = improved[0]
+        lines.append(f"本轮涨幅最大的是“{best['name']}”，提升了 {best['delta']} 分。")
+    if regressed:
+        worst = regressed[0]
+        lines.append(f"本轮回落最多的是“{worst['name']}”，下降了 {abs(worst['delta'])} 分。")
+    weakest = sorted(after_metrics, key=lambda item: item.score)[:2]
+    for item in weakest:
+        if item.name == "验收意识":
+            lines.append("下一轮继续强制每阶段附验证命令和可观察结果。")
+        elif item.name == "验证闭环":
+            lines.append("让 AI 在回报里固定写清“改了什么、怎么验、还有什么没验”。")
+        elif item.name == "协作节奏":
+            lines.append("把任务拆成更短的回合，单关验收后再推进。")
+        elif item.name == "上下文承接":
+            lines.append("连续回合重复关键目标词，降低上下文漂移。")
+        elif item.name == "执行落地":
+            lines.append("要求 AI 先做第一步实现，再给总结。")
+        elif item.name == "目标清晰度":
+            lines.append("把目标改写成“目标 + 约束 + 输出物 + 验收”。")
+    deduped: list[str] = []
+    for line in lines:
+        if line not in deduped:
+            deduped.append(line)
+    return deduped[:3]
 
 
 def _score_clarity(messages) -> int:

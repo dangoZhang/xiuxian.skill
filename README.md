@@ -48,7 +48,7 @@
 你可以选择三种输出：
 
 - `user`：只看用户修仙画像
-- `assistant`：只看 AI 能力画像
+- `assistant`：只看 AI 协作能力证书
 - `both`：两张一起发
 
 每次输出都包含：
@@ -57,6 +57,8 @@
 - 核心标签
 - 判定依据
 - 下一次突破任务
+
+如果你有前后两个周期的运行文件，还可以直接做一次破境对比。
 
 ## 用法
 
@@ -88,6 +90,15 @@ python3 -m portrait_skill.cli analyze \
   --certificate both \
   --output ./report.md \
   --json-output ./report.json
+```
+
+对比前后两个周期，看有没有升级：
+
+```bash
+python3 -m portrait_skill.cli compare \
+  --before ./cycle-1.jsonl \
+  --after ./cycle-2.jsonl \
+  --certificate both
 ```
 
 ## 示例
@@ -145,6 +156,7 @@ pip install -e .
 ```bash
 python3 -m portrait_skill.cli scan
 python3 -m portrait_skill.cli analyze --source codex --certificate both
+python3 -m portrait_skill.cli compare --before ./old.jsonl --after ./new.jsonl --certificate both
 ```
 
 ## 目录结构

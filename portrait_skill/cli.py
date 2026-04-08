@@ -4,9 +4,9 @@ import argparse
 import json
 from pathlib import Path
 
-from .analyzer import analyze_transcript
+from .analyzer import analyze_transcript, compare_analyses
 from .parsers import latest_transcript, load_transcript, summarize_locations
-from .renderer import render_markdown
+from .renderer import render_comparison_markdown, render_markdown
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -26,6 +26,14 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--output", help="Write markdown report to a file.")
     analyze.add_argument("--json-output", help="Write structured JSON summary to a file.")
 
+    compare = subparsers.add_parser("compare", help="Compare two transcripts and judge whether the user or AI broke through.")
+    compare.add_argument("--before", required=True, help="Previous-cycle transcript path.")
+    compare.add_argument("--after", help="Current-cycle transcript path. If omitted, use latest file for --source.")
+    compare.add_argument("--source", choices=["auto", "codex", "claude", "opencode"], default="auto")
+    compare.add_argument("--certificate", choices=["user", "assistant", "both"], default="both")
+    compare.add_argument("--output", help="Write markdown comparison report to a file.")
+    compare.add_argument("--json-output", help="Write structured comparison JSON to a file.")
+
     return parser
 
 
@@ -35,6 +43,10 @@ def main() -> None:
 
     if args.command == "scan":
         _handle_scan(args.source)
+        return
+
+    if args.command == "compare":
+        _handle_compare(args)
         return
 
     source = args.source
@@ -58,6 +70,31 @@ def main() -> None:
         output_path = Path(args.json_output).expanduser().resolve()
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(_to_json(analysis), ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _handle_compare(args) -> None:
+    source = args.source
+    before = analyze_transcript(load_transcript(args.before, source=source))
+    if args.after:
+        after = analyze_transcript(load_transcript(args.after, source=source))
+    else:
+        if source == "auto":
+            source = "codex"
+        after = analyze_transcript(load_transcript(latest_transcript(source), source=source))
+
+    comparison = compare_analyses(before, after)
+    markdown = render_comparison_markdown(comparison, certificate_choice=args.certificate)
+    if args.output:
+        output_path = Path(args.output).expanduser().resolve()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(markdown, encoding="utf-8")
+    else:
+        print(markdown)
+
+    if args.json_output:
+        output_path = Path(args.json_output).expanduser().resolve()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(comparison, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _handle_scan(source: str) -> None:

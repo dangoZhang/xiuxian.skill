@@ -1,6 +1,6 @@
 ---
 name: portrait.skill
-description: Read Codex, Claude Code, or OpenCode transcript files, extract user-AI collaboration patterns, issue cultivation or AI capability portraits, and guide the next breakthrough cycle.
+description: Read Codex, Claude Code, or OpenCode transcript files, extract user-AI collaboration patterns, issue cultivation portraits or AI collaboration capability certificates, and guide the next breakthrough cycle.
 ---
 
 # portrait.skill
@@ -12,7 +12,7 @@ description: Read Codex, Claude Code, or OpenCode transcript files, extract user
 - User cultivation portrait
 - AI collaboration capability certificate
 
-It can also produce a next-cycle breakthrough plan so the user can return after another work period and recertify.
+It can also produce a next-cycle breakthrough plan and compare two cycles to judge whether the user or AI broke through.
 
 ## When To Use
 
@@ -41,6 +41,7 @@ Use this skill when the user wants to:
    - evidence
    - next breakthrough tasks
 5. If the user wants growth guidance, turn the weakest dimensions into a 1-cycle training plan.
+6. If the user provides two transcripts, compare them and report whether they upgraded.
 
 ## Local Defaults
 
@@ -54,6 +55,7 @@ Use this skill when the user wants to:
 python3 -m portrait_skill.cli scan
 python3 -m portrait_skill.cli analyze --source codex --certificate both
 python3 -m portrait_skill.cli analyze --path ~/.codex/archived_sessions/rollout-xxx.jsonl --certificate user
+python3 -m portrait_skill.cli compare --before ./cycle-1.jsonl --after ./cycle-2.jsonl --certificate both
 ```
 
 ## Output Contract
