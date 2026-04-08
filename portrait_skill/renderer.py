@@ -94,6 +94,8 @@ def _render_metrics(title: str, metrics: list[MetricScore]) -> str:
 
 
 def _render_certificate(certificate: Certificate) -> str:
+    if certificate.track == "assistant":
+        return _render_assistant_certificate(certificate)
     lines = [
         f"## {certificate.title}",
         f"**等级**：{certificate.level}",
@@ -114,6 +116,8 @@ def _render_certificate(certificate: Certificate) -> str:
 
 
 def _render_certificate_dict(certificate: dict[str, object]) -> str:
+    if certificate["track"] == "assistant":
+        return _render_assistant_certificate_dict(certificate)
     persona = certificate["persona"]
     lines = [
         f"## {certificate['title']}",
@@ -129,6 +133,47 @@ def _render_certificate_dict(certificate: dict[str, object]) -> str:
     for item in certificate["evidence"]:
         lines.append(f"- {item}")
     lines.extend(["", "### 下一次突破任务"])
+    for item in certificate["growth_plan"]:
+        lines.append(f"- {item}")
+    return "\n".join(lines)
+
+
+def _render_assistant_certificate(certificate: Certificate) -> str:
+    lines = [
+        f"## {certificate.title}",
+        f"**等级**：{certificate.level}",
+        f"**总分**：`{certificate.score}/100`",
+        f"**能力类型**：{certificate.persona.title}",
+        f"**能力说明**：{certificate.persona.subtitle}",
+        f"**能力标签**：{' / '.join(certificate.persona.tags)}",
+        f"**结论**：{certificate.persona.summary}",
+        "",
+        "### 判定依据",
+    ]
+    for item in certificate.evidence:
+        lines.append(f"- {item}")
+    lines.extend(["", "### 下一次提升建议"])
+    for item in certificate.growth_plan:
+        lines.append(f"- {item}")
+    return "\n".join(lines)
+
+
+def _render_assistant_certificate_dict(certificate: dict[str, object]) -> str:
+    persona = certificate["persona"]
+    lines = [
+        f"## {certificate['title']}",
+        f"**等级**：{certificate['level']}",
+        f"**总分**：`{certificate['score']}/100`",
+        f"**能力类型**：{persona['title']}",
+        f"**能力说明**：{persona['subtitle']}",
+        f"**能力标签**：{' / '.join(persona['tags'])}",
+        f"**结论**：{persona['summary']}",
+        "",
+        "### 判定依据",
+    ]
+    for item in certificate["evidence"]:
+        lines.append(f"- {item}")
+    lines.extend(["", "### 下一次提升建议"])
     for item in certificate["growth_plan"]:
         lines.append(f"- {item}")
     return "\n".join(lines)

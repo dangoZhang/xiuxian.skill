@@ -19,14 +19,14 @@ REALM_LEVELS = [
 ]
 
 AI_LEVELS = [
-    (0, "对话木偶"),
-    (36, "提示词学徒"),
-    (48, "执行傀儡"),
-    (60, "任务工匠"),
-    (72, "工具驭者"),
-    (82, "协作丹师"),
-    (90, "推演司命"),
-    (96, "破局宗师"),
+    (0, "L1"),
+    (36, "L2"),
+    (48, "L3"),
+    (60, "L4"),
+    (72, "L5"),
+    (82, "L6"),
+    (90, "L7"),
+    (96, "L8"),
 ]
 
 LEVEL_TABLES = {
@@ -261,10 +261,10 @@ def _build_aggregate_certificate(
         subtitle = "按高位发挥定级，剔除低样本偏置"
         summary = "这是你的稳定高位状态，不取单次最高分，适合判断真实上限。"
     else:
-        persona_title = f"{level}型 AI 协作者"
+        persona_title = f"{level} AI 协作者"
         title = "AI 协作能力证书"
         subtitle = "按高位发挥定级，剔除低样本偏置"
-        summary = "这是 AI 在你的长期协作样本里的稳定高位能力，不是偶发峰值。"
+        summary = "这是 AI 在长期协作样本里的稳定高位能力，不是偶发峰值。"
     return {
         "track": track,
         "title": title,
@@ -449,8 +449,8 @@ def _build_assistant_certificate(score: int, metrics: list[MetricScore], transcr
     top = sorted(metrics, key=lambda item: item.score, reverse=True)
     low = sorted(metrics, key=lambda item: item.score)
     persona = Persona(
-        title=f"{level}型 AI 协作者",
-        subtitle="偏执行、重闭环、看证据说话",
+        title=f"{level} AI 协作者",
+        subtitle="执行、闭环、承接、补救四项综合评级",
         tags=_metric_tags(top[:3]),
         summary="这类 AI 适合承担拆解、实现、验证与回收问题的工作，但仍需要你提供更高质量的上下文燃料。",
     )
