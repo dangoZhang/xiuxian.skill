@@ -19,6 +19,8 @@ class Transcript:
     messages: list[Message]
     tool_calls: int = 0
     raw_event_count: int = 0
+    models: list[str] = field(default_factory=list)
+    providers: list[str] = field(default_factory=list)
 
 
 @dataclass(slots=True)

@@ -119,6 +119,8 @@ def _to_json(analysis):
             "path": redact_path(analysis.transcript.path),
             "message_count": len(analysis.transcript.messages),
             "tool_calls": analysis.transcript.tool_calls,
+            "models": analysis.transcript.models,
+            "providers": analysis.transcript.providers,
         },
         "user_metrics": [{"name": item.name, "score": item.score, "rationale": item.rationale} for item in analysis.user_metrics],
         "assistant_metrics": [{"name": item.name, "score": item.score, "rationale": item.rationale} for item in analysis.assistant_metrics],

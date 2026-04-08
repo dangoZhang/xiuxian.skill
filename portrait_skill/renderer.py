@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from .analyzer import infer_talent
 from .parsers import redact_path
 from .models import Analysis, Certificate, MetricScore
 
 
 def render_markdown(analysis: Analysis, certificate_choice: str = "both") -> str:
+    talent = infer_talent(analysis.transcript)
     sections = [
         "# portrait.skill 画像报告",
         "",
@@ -12,12 +14,24 @@ def render_markdown(analysis: Analysis, certificate_choice: str = "both") -> str
         analysis.overview,
         f"- 来源：`{analysis.transcript.source}`",
         f"- 文件：`{redact_path(analysis.transcript.path)}`",
-        "",
-        "## 维度评分",
-        _render_metrics("用户协作维度", analysis.user_metrics),
-        "",
-        _render_metrics("AI 协作维度", analysis.assistant_metrics),
     ]
+    if talent:
+        sections.extend(
+            [
+                f"- 灵根：`{talent['root']}`",
+                f"- 资质：`{talent['aptitude']}`",
+                f"- 炉主模型：`{talent['primary_model']}`",
+            ]
+        )
+    sections.extend(
+        [
+            "",
+            "## 维度评分",
+            _render_metrics("用户协作维度", analysis.user_metrics),
+            "",
+            _render_metrics("AI 协作维度", analysis.assistant_metrics),
+        ]
+    )
     if certificate_choice in {"user", "both"}:
         sections.extend(["", _render_certificate(analysis.user_certificate)])
     if certificate_choice in {"assistant", "both"}:

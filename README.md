@@ -1,21 +1,40 @@
 # portrait.skill
 
-把你的 Codex / Claude Code / OpenCode 运行文件，炼成一张看得见的协作画像。
+把你的 Codex / Claude Code / OpenCode / Cursor / VS Code 运行卷宗投入炉中，炼成一张修仙画像，照见你与 AI 的气脉、心法与境界。
 
-`portrait.skill` 会读取真实会话日志，提炼你和 AI 的交互方式，然后发两类结果：
+`portrait.skill` 不看宣传页，只看真实运行文件。它会从一轮轮协作里提炼三件事：
 
-- 用户修仙画像
-- AI 协作能力证书
+- 你现在是什么修为，卡在哪一关
+- 你的 AI 目前有多强，强在执行、工具、承接还是补救
+- 下一轮该怎么闭关，才能真正破境
 
-如果你愿意继续修炼，它还会给出下一周期的突破任务。你跑完一轮新协作，再用新日志复测，就能看自己有没有破境。
+这不是一个“prompt 打分器”。
 
-## 这是什么
+这是一个把运行日志炼成修炼结果的 skill。
 
-很多 AI 工具只展示模型上限。
+## 这份 README 该有什么灵魂
 
-`portrait.skill` 更关心另一件事：你和 AI 在真实工作里，到底配不配，卡在哪里，强在哪里，下一步该怎么变强。
+像 `Ex.skill`、`Colleague.skill` 这类会爆的项目，核心从来不是“功能列表很全”。
 
-它不看宣传页，只看运行文件本身：
+核心是三步：
+
+1. 一句话就让人明白“拿什么来炼”
+2. 一句话就让人明白“炼完会得到什么”
+3. 一句话就让人明白“这东西会改变我什么”
+
+所以 `portrait.skill` 的灵魂也必须足够直接：
+
+- 拿真实运行文件来炼
+- 炼出修仙画像，或者 AI 协作能力证书
+- 用下一周期复测，判断自己有没有破境
+
+## 它炼的是什么
+
+它炼的不是模型上限。
+
+它炼的是你和 AI 在真实工作里的协作道行。
+
+炉中会看这些东西：
 
 - 你给目标是否清楚
 - 你补上下文是否到位
@@ -24,53 +43,85 @@
 - 双方有没有验证结果
 - 遇到阻力后会不会换打法
 
-最后把这些浓缩成一份可读、可复测、可成长的画像与证书。
+最后出炉的，不是一次性的“这轮不错”。
 
-## 它适合谁
+而是一份可复测、可比较、可升级的协作画像。
 
-- 想复盘自己和 AI 的协作方式
-- 想做“周期性破境”，而不是一次性 prompt 碰运气
-- 想把 AI 协作做成可追踪的个人能力
-- 想把 Codex / Claude Code / OpenCode 的真实日志转成作品感更强的输出
+## 适合谁来炼
 
-## 当前可读的数据
+- 想复盘自己和 AI 到底怎么配合的人
+- 想把“会用 AI”变成可追踪能力的人
+- 想做周期性闭关，而不是一次次随机碰运气的人
+- 想把 Codex / Claude Code / OpenCode / Cursor / VS Code 的真实日志炼成更有作品感输出的人
 
-首版重点支持：
+## 可投入炉中的卷宗
+
+当前支持的主要输入：
 
 - Codex 运行日志：`~/.codex/archived_sessions/*.jsonl`
+- Codex 新版会话目录：`~/.codex/sessions/**/rollout-*.jsonl`
 - Claude Code 导出的 JSON / JSONL 会话文件
 - OpenCode 的 JSON / JSONL 会话文件
-- Cursor Chat 会话目录：常见 `workspaceStorage/*/chatSessions/*.json`
-- VS Code Chat / Copilot Chat 会话目录：常见 `workspaceStorage/*/chatSessions/*.json`
+- Cursor Chat 常见目录：`workspaceStorage/*/chatSessions/*.json`
+- VS Code Chat / Copilot Chat 常见目录：`workspaceStorage/*/chatSessions/*.json`
 
-其中 Codex 解析最稳。Claude Code / OpenCode / Cursor / VS Code 目前走适配器和 schema sniffing。只要能拿到结构化 JSON / JSONL 会话文件，就可以手动 `--path` 分析。
+当前炉火最稳的是 `Codex`。
 
-## 它会产出什么
+`Claude Code / OpenCode / Cursor / VS Code` 已经支持默认目录发现和手动 `--path` 投喂，但不同版本 schema 会有差异，所以真实表现仍取决于你手里的会话文件结构。
 
-你可以选择三种输出：
+## 出炉之物
 
-- `user`：只看用户修仙画像
-- `assistant`：只看 AI 协作能力证书
-- `both`：两张一起发
+你可以选择三种结果：
 
-每次输出都包含：
+- `user`：只出你的修仙画像
+- `assistant`：只出 AI 协作能力证书
+- `both`：两炉同开，一次全出
+
+如果你喜欢修仙叙事，这个项目会把你的协作状态炼成一张“修仙画像”，告诉你如今处在炼气、筑基、金丹、元婴还是更高境界。
+
+如果你不喜欢修仙背景也没关系，我们会直接为你颁发一张“AI 协作能力证书”，用更直接的方式告诉你，你和 AI 现在处在什么协作层级，强项和短板分别是什么。
+
+每次出炉都会带上：
 
 - 当前等级
 - 核心标签
 - 判定依据
-- 下一次突破任务
+- 下一轮闭关任务
 
-如果你有前后两个周期的运行文件，还可以直接做一次破境对比。
+如果你拿前后两个周期的卷宗来炼，它还会额外告诉你：
 
-## 用法
+- 这轮有没有破境
+- 哪个维度涨得最快
+- 哪个维度回落了
+- 下轮应该主炼哪一门
 
-先看本机默认会话目录：
+如果运行文件里带了模型信息，它还会额外标出：
+
+- 灵根
+- 资质
+- 炉主模型
+
+## 一轮闭关怎么走
+
+1. 完成一轮真实协作。
+2. 把运行文件投给 `portrait.skill`。
+3. 看你的修仙画像和 AI 协作能力证书。
+4. 按最弱两项去练一轮。
+5. 用新日志再炼一次，看自己是否破境。
+
+这时你积累的就不是“我感觉自己更会了”。
+
+而是一条能看到升阶轨迹的协作修炼线。
+
+## 快速开炉
+
+先看本机有哪些卷宗：
 
 ```bash
 python3 -m portrait_skill.cli scan
 ```
 
-也可以只扫某一类来源：
+只扫某一类来源：
 
 ```bash
 python3 -m portrait_skill.cli scan --source codex
@@ -79,7 +130,7 @@ python3 -m portrait_skill.cli scan --source cursor
 python3 -m portrait_skill.cli scan --source vscode
 ```
 
-分析最新的 Codex 日志：
+分析最新的卷宗：
 
 ```bash
 python3 -m portrait_skill.cli analyze --source codex --certificate both
@@ -88,7 +139,7 @@ python3 -m portrait_skill.cli analyze --source cursor --certificate both
 python3 -m portrait_skill.cli analyze --source vscode --certificate both
 ```
 
-指定某个文件做分析：
+手动指定一份卷宗：
 
 ```bash
 python3 -m portrait_skill.cli analyze \
@@ -96,7 +147,7 @@ python3 -m portrait_skill.cli analyze \
   --certificate user
 ```
 
-输出 Markdown 报告和 JSON 摘要：
+导出 Markdown 和 JSON：
 
 ```bash
 python3 -m portrait_skill.cli analyze \
@@ -106,7 +157,7 @@ python3 -m portrait_skill.cli analyze \
   --json-output ./report.json
 ```
 
-对比前后两个周期，看有没有升级：
+对比前后两次闭关，看有没有破境：
 
 ```bash
 python3 -m portrait_skill.cli compare \
@@ -115,9 +166,9 @@ python3 -m portrait_skill.cli compare \
   --certificate both
 ```
 
-## 示例
+## 一个最小示例
 
-仓库里放了一个最小的演示样本：
+仓库里带了一份最小演示样本：
 
 ```bash
 python3 -m portrait_skill.cli analyze \
@@ -126,9 +177,9 @@ python3 -m portrait_skill.cli analyze \
   --output examples/demo_report.md
 ```
 
-## 画像逻辑
+## 炼化依据
 
-用户修仙画像关注：
+用户修仙画像主要看：
 
 - 目标清晰度
 - 上下文供给
@@ -136,7 +187,7 @@ python3 -m portrait_skill.cli analyze \
 - 验收意识
 - 协作节奏
 
-AI 协作能力证书关注：
+如果你走“能力证书”这条线，AI 协作能力证书主要看：
 
 - 执行落地
 - 工具调度
@@ -144,17 +195,9 @@ AI 协作能力证书关注：
 - 上下文承接
 - 补救适配
 
-它不追求假精确分数。它追求的是一套稳定、直观、能指导下一轮行动的判断框架。
+它不追求假精确分数。
 
-## 一个推荐周期
-
-1. 完成一轮真实协作。
-2. 把运行文件喂给 `portrait.skill`。
-3. 拿到你的画像证书。
-4. 按最弱两项去练一轮。
-5. 用新日志再测一次，看自己是否破境。
-
-这样你积累的就不只是“我好像更会用了”，而是一条能看见成长轨迹的协作修炼线。
+它追求的是一套稳定、直观、能指导下一轮行动的判断框架。
 
 ## 安装
 
@@ -173,6 +216,12 @@ python3 -m portrait_skill.cli analyze --source codex --certificate both
 python3 -m portrait_skill.cli compare --before ./old.jsonl --after ./new.jsonl --certificate both
 ```
 
+## 隐私
+
+这个项目不依赖服务端。
+
+你可以全程在本地读取本地运行文件。默认输出会把家目录自动脱敏成 `~`，其他绝对路径只显示文件名，避免把本机身份信息直接写进报告。若要公开演示，仍然建议只提交脱敏日志或合成样本。
+
 ## 目录结构
 
 ```text
@@ -190,23 +239,3 @@ portrait.skill/
   SKILL.md
   pyproject.toml
 ```
-
-## 隐私
-
-这个项目不依赖服务端。
-
-你可以全程在本地读取本地运行文件。默认输出会把家目录自动脱敏成 `~`，避免把本机用户名直接写进报告。若要公开演示，仍然建议只提交脱敏日志或合成样本。
-
-## Roadmap
-
-- 多次运行记录的横向对比
-- 跨周趋势线
-- 更强的 Claude Code / OpenCode 专项适配
-- 可直接分享的图片化证书
-- 教练模式，把弱项自动转成训练任务
-
-## 灵感来源
-
-README 的结构刻意参考了 Open Skills 上这类“爆款 skill 项目”的写法：一句话钩子、明确数据来源、直接展示输出物、再把“它会改变什么”讲明白。
-
-我参考的公开页面包括 `Ex.skill` 和 `Colleague.skill`。

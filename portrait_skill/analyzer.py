@@ -94,6 +94,36 @@ def compare_analyses(before: Analysis, after: Analysis) -> dict[str, object]:
     }
 
 
+def infer_talent(transcript: Transcript) -> dict[str, str] | None:
+    models = list(dict.fromkeys(transcript.models))
+    if not models:
+        return None
+    primary = models[0]
+    if len(models) > 1:
+        root = "杂灵根"
+        aptitude = f"多模型杂修（{len(models)} 炉并修）"
+    else:
+        lowered = primary.lower()
+        if "gpt-5" in lowered or "claude-opus" in lowered:
+            root = "天灵根"
+            aptitude = "上品资质"
+        elif "claude" in lowered or "gpt-4" in lowered or "gemini" in lowered:
+            root = "地灵根"
+            aptitude = "上中资质"
+        elif any(token in lowered for token in ["deepseek", "qwen", "mistral", "llama"]):
+            root = "玄灵根"
+            aptitude = "中品资质"
+        else:
+            root = "异灵根"
+            aptitude = "可塑资质"
+    return {
+        "root": root,
+        "aptitude": aptitude,
+        "primary_model": primary,
+        "models": " / ".join(models[:4]),
+    }
+
+
 def _compare_track(before: Analysis, after: Analysis, track: str) -> dict[str, object]:
     before_certificate = before.user_certificate if track == "user" else before.assistant_certificate
     after_certificate = after.user_certificate if track == "user" else after.assistant_certificate

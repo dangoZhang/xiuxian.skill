@@ -112,10 +112,20 @@ def parse_codex(path: Path) -> Transcript:
     messages: list[Message] = []
     tool_calls = 0
     raw_event_count = 0
+    models: list[str] = []
+    providers: list[str] = []
     for item in iter_jsonl(path):
         raw_event_count += 1
         event_type = item.get("type")
         payload = item.get("payload") or {}
+        if event_type == "session_meta" and isinstance(payload, dict):
+            if isinstance(payload.get("model_provider"), str):
+                providers.append(payload["model_provider"])
+            if isinstance(payload.get("model"), str):
+                models.append(payload["model"])
+        elif event_type == "turn_context" and isinstance(payload, dict):
+            if isinstance(payload.get("model"), str):
+                models.append(payload["model"])
         if event_type == "event_msg" and payload.get("type") == "user_message":
             text = payload.get("message") or _flatten_text(payload.get("text_elements"))
             if text:
@@ -143,19 +153,38 @@ def parse_codex(path: Path) -> Transcript:
             tool_calls += 1
         elif event_type == "response_item" and payload.get("type") == "reasoning":
             continue
-    return Transcript(source="codex", path=path, messages=messages, tool_calls=tool_calls, raw_event_count=raw_event_count)
+    return Transcript(
+        source="codex",
+        path=path,
+        messages=messages,
+        tool_calls=tool_calls,
+        raw_event_count=raw_event_count,
+        models=sorted(set(models)),
+        providers=sorted(set(providers)),
+    )
 
 
 def parse_generic(path: Path, source: str) -> Transcript:
     messages: list[Message] = []
     tool_calls = 0
     raw_event_count = 0
+    models: list[str] = []
+    providers: list[str] = []
     items = _load_data(path)
 
     if source in {"cursor", "vscode"}:
         turn_messages, turn_tools, turn_events = _extract_pair_turns(items)
+        model_hits, provider_hits = _collect_models(items)
         if turn_messages:
-            return Transcript(source=source, path=path, messages=turn_messages, tool_calls=turn_tools, raw_event_count=turn_events)
+            return Transcript(
+                source=source,
+                path=path,
+                messages=turn_messages,
+                tool_calls=turn_tools,
+                raw_event_count=turn_events,
+                models=sorted(set(model_hits)),
+                providers=sorted(set(provider_hits)),
+            )
 
     for obj in _walk_objects(items):
         if not isinstance(obj, dict):
@@ -174,7 +203,18 @@ def parse_generic(path: Path, source: str) -> Transcript:
             )
         if _looks_like_tool_call(obj):
             tool_calls += 1
-    return Transcript(source=source, path=path, messages=messages, tool_calls=tool_calls, raw_event_count=raw_event_count)
+        model_hits, provider_hits = _extract_model_info(obj)
+        models.extend(model_hits)
+        providers.extend(provider_hits)
+    return Transcript(
+        source=source,
+        path=path,
+        messages=messages,
+        tool_calls=tool_calls,
+        raw_event_count=raw_event_count,
+        models=sorted(set(models)),
+        providers=sorted(set(providers)),
+    )
 
 
 def iter_jsonl(path: Path):
@@ -250,6 +290,32 @@ def _extract_requests(obj: dict[str, object]) -> list[dict[str, object]]:
         if isinstance(nested, list):
             return [item for item in nested if isinstance(item, dict)]
     return []
+
+
+def _collect_models(node) -> tuple[list[str], list[str]]:
+    models: list[str] = []
+    providers: list[str] = []
+    for obj in _walk_objects(node):
+        if not isinstance(obj, dict):
+            continue
+        model_hits, provider_hits = _extract_model_info(obj)
+        models.extend(model_hits)
+        providers.extend(provider_hits)
+    return models, providers
+
+
+def _extract_model_info(obj: dict[str, object]) -> tuple[list[str], list[str]]:
+    models: list[str] = []
+    providers: list[str] = []
+    for key in ("model", "modelName", "model_name", "modelId", "model_id", "modelSlug"):
+        value = obj.get(key)
+        if isinstance(value, str) and value.strip():
+            models.append(value.strip())
+    for key in ("provider", "modelProvider", "providerName"):
+        value = obj.get(key)
+        if isinstance(value, str) and value.strip():
+            providers.append(value.strip())
+    return models, providers
 
 
 def _extract_role(obj: dict[str, object]) -> str | None:
