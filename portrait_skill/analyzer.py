@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from statistics import mean
+from pathlib import Path
+from statistics import mean, median
 
 from .models import Analysis, Certificate, MetricScore, Persona, Transcript
 
@@ -94,6 +95,47 @@ def compare_analyses(before: Analysis, after: Analysis) -> dict[str, object]:
     }
 
 
+def aggregate_analyses(analyses: list[Analysis], min_messages: int = 8) -> dict[str, object]:
+    if not analyses:
+        raise ValueError("No analyses to aggregate.")
+
+    eligible = [item for item in analyses if len(item.transcript.messages) >= min_messages]
+    pool = eligible or analyses
+    dropped = len(analyses) - len(pool)
+    total_messages = sum(len(item.transcript.messages) for item in pool)
+    total_tool_calls = sum(item.transcript.tool_calls for item in pool)
+
+    user_metrics = _aggregate_metric_scores([item.user_metrics for item in pool])
+    assistant_metrics = _aggregate_metric_scores([item.assistant_metrics for item in pool])
+
+    user_score = _stable_high_score([item.user_certificate.score for item in pool])
+    assistant_score = _stable_high_score([item.assistant_certificate.score for item in pool])
+
+    models = _merge_unique(item for analysis in pool for item in analysis.transcript.models)
+    providers = _merge_unique(item for analysis in pool for item in analysis.transcript.providers)
+
+    overview = (
+        f"共纳入 {len(pool)} 场会话，累计 {total_messages} 条有效消息，"
+        f"工具调用 {total_tool_calls} 次。"
+    )
+    if dropped:
+        overview += f" 另有 {dropped} 场低样本会话因消息数低于 {min_messages} 被排除。"
+
+    return {
+        "overview": overview,
+        "sessions_total": len(analyses),
+        "sessions_used": len(pool),
+        "sessions_dropped": dropped,
+        "min_messages": min_messages,
+        "models": models,
+        "providers": providers,
+        "user_metrics": user_metrics,
+        "assistant_metrics": assistant_metrics,
+        "user_certificate": _build_aggregate_certificate("user", user_score, user_metrics, len(pool), total_messages),
+        "assistant_certificate": _build_aggregate_certificate("assistant", assistant_score, assistant_metrics, len(pool), total_messages),
+    }
+
+
 def infer_talent(transcript: Transcript) -> dict[str, str] | None:
     models = list(dict.fromkeys(transcript.models))
     if not models:
@@ -122,6 +164,13 @@ def infer_talent(transcript: Transcript) -> dict[str, str] | None:
         "primary_model": primary,
         "models": " / ".join(models[:4]),
     }
+
+
+def infer_talent_from_models(models: list[str]) -> dict[str, str] | None:
+    if not models:
+        return None
+    transcript = Transcript(source="aggregate", path=Path("."), messages=[], models=models)
+    return infer_talent(transcript)
 
 
 def _compare_track(before: Analysis, after: Analysis, track: str) -> dict[str, object]:
@@ -165,6 +214,74 @@ def _compare_track(before: Analysis, after: Analysis, track: str) -> dict[str, o
         "top_improvements": improved[:3],
         "top_regressions": regressed[:2],
         "next_focus": _compare_next_focus(improved, regressed, after_metrics),
+    }
+
+
+def _aggregate_metric_scores(metric_lists: list[list[MetricScore]]) -> list[MetricScore]:
+    names = [item.name for item in metric_lists[0]]
+    aggregated: list[MetricScore] = []
+    for name in names:
+        scores = [item.score for metrics in metric_lists for item in metrics if item.name == name]
+        score = _stable_high_score(scores)
+        rationale = f"基于 {len(scores)} 个样本高位聚合，中位数 {round(median(scores))}，高位分 {score}。"
+        aggregated.append(MetricScore(name=name, score=score, rationale=rationale))
+    return aggregated
+
+
+def _stable_high_score(scores: list[int]) -> int:
+    if not scores:
+        return 0
+    ordered = sorted(scores)
+    index = max(0, min(len(ordered) - 1, int(len(ordered) * 0.8) - 1))
+    high_quantile = ordered[index]
+    return max(round(median(ordered)), high_quantile)
+
+
+def _merge_unique(items) -> list[str]:
+    seen: list[str] = []
+    for item in items:
+        if item and item not in seen:
+            seen.append(item)
+    return seen
+
+
+def _build_aggregate_certificate(
+    track: str,
+    score: int,
+    metrics: list[MetricScore],
+    session_count: int,
+    total_messages: int,
+) -> dict[str, object]:
+    level = _pick_level(score, REALM_LEVELS if track == "user" else AI_LEVELS)
+    top = sorted(metrics, key=lambda item: item.score, reverse=True)
+    low = sorted(metrics, key=lambda item: item.score)
+    if track == "user":
+        persona_title = f"{level}协作修士"
+        title = "修仙画像"
+        subtitle = "按高位发挥定级，剔除低样本偏置"
+        summary = "这是你的稳定高位状态，不取单次最高分，适合判断真实上限。"
+    else:
+        persona_title = f"{level}型 AI 协作者"
+        title = "AI 协作能力证书"
+        subtitle = "按高位发挥定级，剔除低样本偏置"
+        summary = "这是 AI 在你的长期协作样本里的稳定高位能力，不是偶发峰值。"
+    return {
+        "track": track,
+        "title": title,
+        "level": level,
+        "score": score,
+        "persona": {
+            "title": persona_title,
+            "subtitle": subtitle,
+            "tags": _metric_tags(top[:3]),
+            "summary": summary,
+        },
+        "evidence": [
+            f"共纳入 {session_count} 场会话，累计 {total_messages} 条有效消息。",
+            f"定级采用高位分位聚合，不直接取单次最高分。",
+            f"最强项：{top[0].name} {top[0].score}/100；当前短板：{low[0].name} {low[0].score}/100。",
+        ],
+        "growth_plan": _growth_plan(low[:2], user_track=(track == "user")),
     }
 
 

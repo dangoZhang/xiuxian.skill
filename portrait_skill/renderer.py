@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .analyzer import infer_talent
+from .analyzer import infer_talent, infer_talent_from_models
 from .parsers import redact_path
 from .models import Analysis, Certificate, MetricScore
 
@@ -53,6 +53,39 @@ def render_comparison_markdown(comparison: dict[str, object], certificate_choice
     return "\n".join(sections).strip() + "\n"
 
 
+def render_aggregate_markdown(aggregate: dict[str, object], certificate_choice: str = "both") -> str:
+    talent = infer_talent_from_models(aggregate.get("models", []))
+    sections = [
+        "# portrait.skill 炼化总报告",
+        "",
+        "## 聚合概览",
+        str(aggregate["overview"]),
+        f"- 纳入会话：`{aggregate['sessions_used']}` / `总会话 {aggregate['sessions_total']}`",
+    ]
+    if talent:
+        sections.extend(
+            [
+                f"- 灵根：`{talent['root']}`",
+                f"- 资质：`{talent['aptitude']}`",
+                f"- 主炉模型：`{talent['primary_model']}`",
+            ]
+        )
+    sections.extend(
+        [
+            "",
+            "## 维度评分",
+            _render_metrics("用户协作维度", aggregate["user_metrics"]),
+            "",
+            _render_metrics("AI 协作维度", aggregate["assistant_metrics"]),
+        ]
+    )
+    if certificate_choice in {"user", "both"}:
+        sections.extend(["", _render_certificate_dict(aggregate["user_certificate"])])
+    if certificate_choice in {"assistant", "both"}:
+        sections.extend(["", _render_certificate_dict(aggregate["assistant_certificate"])])
+    return "\n".join(sections).strip() + "\n"
+
+
 def _render_metrics(title: str, metrics: list[MetricScore]) -> str:
     lines = [f"### {title}"]
     for item in metrics:
@@ -76,6 +109,27 @@ def _render_certificate(certificate: Certificate) -> str:
         lines.append(f"- {item}")
     lines.extend(["", "### 下一次突破任务"])
     for item in certificate.growth_plan:
+        lines.append(f"- {item}")
+    return "\n".join(lines)
+
+
+def _render_certificate_dict(certificate: dict[str, object]) -> str:
+    persona = certificate["persona"]
+    lines = [
+        f"## {certificate['title']}",
+        f"**等级**：{certificate['level']}",
+        f"**总分**：`{certificate['score']}/100`",
+        f"**画像**：{persona['title']}",
+        f"**副标题**：{persona['subtitle']}",
+        f"**标签**：{' / '.join(persona['tags'])}",
+        f"**总结**：{persona['summary']}",
+        "",
+        "### 判定依据",
+    ]
+    for item in certificate["evidence"]:
+        lines.append(f"- {item}")
+    lines.extend(["", "### 下一次突破任务"])
+    for item in certificate["growth_plan"]:
         lines.append(f"- {item}")
     return "\n".join(lines)
 

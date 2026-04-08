@@ -2,11 +2,21 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime
 from pathlib import Path
 
-from .analyzer import analyze_transcript, compare_analyses
-from .parsers import latest_transcript, load_transcript, normalize_source, redact_path, summarize_locations
-from .renderer import render_comparison_markdown, render_markdown
+from .analyzer import aggregate_analyses, analyze_transcript, compare_analyses
+from .parsers import (
+    filter_candidate_files,
+    latest_transcript,
+    load_transcript,
+    normalize_source,
+    parse_date_bound,
+    redact_path,
+    session_datetime,
+    summarize_locations,
+)
+from .renderer import render_aggregate_markdown, render_comparison_markdown, render_markdown
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -23,6 +33,11 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--path", help="Transcript path. If omitted, use the latest file for --source.")
     analyze.add_argument("--source", choices=["auto", "codex", "claude", "cc", "opencode", "cursor", "vscode", "code"], default="auto")
     analyze.add_argument("--certificate", choices=["user", "assistant", "both"], default="both")
+    analyze.add_argument("--all", action="store_true", help="Aggregate all detected sessions for the source.")
+    analyze.add_argument("--since", help="Only include sessions on/after this date or datetime. Example: 2026-04-01")
+    analyze.add_argument("--until", help="Only include sessions on/before this date or datetime. Example: 2026-04-09")
+    analyze.add_argument("--limit", type=int, help="Cap the number of sessions after filtering.")
+    analyze.add_argument("--min-messages", type=int, default=8, help="Exclude tiny sessions below this message count in aggregate mode.")
     analyze.add_argument("--output", help="Write markdown report to a file.")
     analyze.add_argument("--json-output", help="Write structured JSON summary to a file.")
 
@@ -52,13 +67,38 @@ def main() -> None:
     source = normalize_source(args.source)
     if args.path:
         transcript = load_transcript(args.path, source=source)
+        analysis = analyze_transcript(transcript)
+        markdown = render_markdown(analysis, certificate_choice=args.certificate)
+        payload = _to_json(analysis)
+    elif args.all or args.since or args.until or args.limit:
+        if source == "auto":
+            source = "codex"
+        files = filter_candidate_files(
+            source,
+            since=parse_date_bound(args.since),
+            until=parse_date_bound(args.until, is_end=True),
+            limit=args.limit,
+        )
+        if not files:
+            raise SystemExit("No sessions matched the requested source/time window.")
+        analyses = [analyze_transcript(load_transcript(path, source=source)) for path in files]
+        aggregate = aggregate_analyses(analyses, min_messages=args.min_messages)
+        aggregate["time_window"] = {
+            "since": args.since,
+            "until": args.until,
+            "latest_session": redact_path(files[0]),
+            "oldest_session": redact_path(files[-1]),
+        }
+        markdown = render_aggregate_markdown(aggregate, certificate_choice=args.certificate)
+        payload = aggregate
     else:
         if source == "auto":
             source = "codex"
         transcript = load_transcript(latest_transcript(source), source=source)
+        analysis = analyze_transcript(transcript)
+        markdown = render_markdown(analysis, certificate_choice=args.certificate)
+        payload = _to_json(analysis)
 
-    analysis = analyze_transcript(transcript)
-    markdown = render_markdown(analysis, certificate_choice=args.certificate)
     if args.output:
         output_path = Path(args.output).expanduser().resolve()
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -69,7 +109,7 @@ def main() -> None:
     if args.json_output:
         output_path = Path(args.json_output).expanduser().resolve()
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(_to_json(analysis), ensure_ascii=False, indent=2), encoding="utf-8")
+        output_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _handle_compare(args) -> None:

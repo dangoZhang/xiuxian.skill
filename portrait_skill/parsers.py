@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from .models import Message, Transcript
@@ -409,6 +411,54 @@ def latest_transcript(source: str) -> Path:
 
 def summarize_locations() -> list[tuple[str, list[str]]]:
     return [(name, [os.fspath(path) for path in paths]) for name, paths in DEFAULT_LOCATIONS.items()]
+
+
+def session_datetime(path: Path, source: str = "auto") -> datetime:
+    source = normalize_source(source if source != "auto" else detect_source(path, source))
+    text = str(path)
+    if source == "codex":
+        match = re.search(r"rollout-(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})", path.name)
+        if match:
+            date_part, hour, minute, second = match.groups()
+            return datetime.fromisoformat(f"{date_part}T{hour}:{minute}:{second}")
+        parts = path.parts
+        try:
+            idx = parts.index("sessions")
+            year, month, day = parts[idx + 1 : idx + 4]
+            return datetime(int(year), int(month), int(day))
+        except (ValueError, IndexError):
+            pass
+    return datetime.fromtimestamp(path.stat().st_mtime)
+
+
+def filter_candidate_files(
+    source: str,
+    since: datetime | None = None,
+    until: datetime | None = None,
+    limit: int | None = None,
+) -> list[Path]:
+    source = normalize_source(source)
+    files = discover_candidate_files(source)
+    selected: list[Path] = []
+    for path in files:
+        stamp = session_datetime(path, source)
+        if since and stamp < since:
+            continue
+        if until and stamp > until:
+            continue
+        selected.append(path)
+        if limit and len(selected) >= limit:
+            break
+    return selected
+
+
+def parse_date_bound(value: str | None, is_end: bool = False) -> datetime | None:
+    if not value:
+        return None
+    dt = datetime.fromisoformat(value)
+    if len(value) == 10 and is_end:
+        dt = dt + timedelta(days=1) - timedelta(microseconds=1)
+    return dt
 
 
 def normalize_source(source: str) -> str:
