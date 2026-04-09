@@ -84,7 +84,7 @@ def main() -> None:
         analysis = analyze_transcript(transcript)
         payload = _to_json(analysis)
         scope_kind = "path"
-        scope_label = f"{source}:单次卷宗"
+        scope_label = f"{source}:单次记录"
     elif args.all or args.since or args.until or args.limit:
         if source == "auto":
             source = "codex"
@@ -295,7 +295,7 @@ def _scope_label(source: str, scope_kind: str, args) -> str:
         return f"{source}:全量会话"
     if scope_kind == "latest":
         return f"{source}:最近一次"
-    return f"{source}:单次卷宗"
+    return f"{source}:单次记录"
 
 
 def _payload_source(payload: dict[str, object], fallback: str) -> str:

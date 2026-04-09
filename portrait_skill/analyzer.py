@@ -82,6 +82,8 @@ LEVEL_TABLES = {
     "assistant": AI_LEVELS,
 }
 
+METHOD_SEDIMENT_TOKENS = ["skill", "workflow", "模板", "模块", "sop", "章法", "复用", "标准化"]
+
 
 def analyze_transcript(transcript: Transcript) -> Analysis:
     user_messages = [item for item in transcript.messages if item.role == "user"]
@@ -103,8 +105,32 @@ def analyze_transcript(transcript: Transcript) -> Analysis:
         MetricScore("补救适配", _score_recovery(user_messages, assistant_messages), _explain_recovery(user_messages, assistant_messages)),
     ]
 
-    user_score = round(mean(metric.score for metric in user_metrics)) if user_metrics else 0
-    assistant_score = round(mean(metric.score for metric in assistant_metrics)) if assistant_metrics else 0
+    raw_user_score = round(mean(metric.score for metric in user_metrics)) if user_metrics else 0
+    raw_assistant_score = round(mean(metric.score for metric in assistant_metrics)) if assistant_metrics else 0
+    method_sediment = _has_method_sediment(transcript.messages)
+    user_score = _cap_score_by_capability(
+        "user",
+        raw_user_score,
+        _user_cap_rank(
+            user_metrics,
+            assistant_metrics,
+            total_messages=len(transcript.messages),
+            tool_calls=transcript.tool_calls,
+            session_count=1,
+            method_sediment=method_sediment,
+        ),
+    )
+    assistant_score = _cap_score_by_capability(
+        "assistant",
+        raw_assistant_score,
+        _assistant_cap_rank(
+            assistant_metrics,
+            total_messages=len(transcript.messages),
+            tool_calls=transcript.tool_calls,
+            session_count=1,
+            method_sediment=method_sediment,
+        ),
+    )
 
     user_certificate = _build_user_certificate(user_score, user_metrics, transcript)
     assistant_certificate = _build_assistant_certificate(assistant_score, assistant_metrics, transcript)
@@ -163,11 +189,35 @@ def aggregate_analyses(analyses: list[Analysis], min_messages: int = 8) -> dict[
     user_metrics = _aggregate_metric_scores([item.user_metrics for item in pool])
     assistant_metrics = _aggregate_metric_scores([item.assistant_metrics for item in pool])
 
-    user_score = _stable_high_score([item.user_certificate.score for item in pool])
-    assistant_score = _stable_high_score([item.assistant_certificate.score for item in pool])
+    raw_user_score = _stable_high_score([item.user_certificate.score for item in pool])
+    raw_assistant_score = _stable_high_score([item.assistant_certificate.score for item in pool])
 
     models = _merge_unique(item for analysis in pool for item in analysis.transcript.models)
     providers = _merge_unique(item for analysis in pool for item in analysis.transcript.providers)
+    method_sediment = any(_has_method_sediment(item.transcript.messages) for item in pool)
+    user_score = _cap_score_by_capability(
+        "user",
+        raw_user_score,
+        _user_cap_rank(
+            user_metrics,
+            assistant_metrics,
+            total_messages=total_messages,
+            tool_calls=total_tool_calls,
+            session_count=len(pool),
+            method_sediment=method_sediment,
+        ),
+    )
+    assistant_score = _cap_score_by_capability(
+        "assistant",
+        raw_assistant_score,
+        _assistant_cap_rank(
+            assistant_metrics,
+            total_messages=total_messages,
+            tool_calls=total_tool_calls,
+            session_count=len(pool),
+            method_sediment=method_sediment,
+        ),
+    )
 
     overview = (
         f"共纳入 {len(pool)} 场会话，累计 {total_messages} 条有效消息，"
@@ -325,7 +375,7 @@ def _build_aggregate_certificate(
         persona_title = f"{level}协作修士"
         title = "修仙画像"
         subtitle = REALM_DESCRIPTIONS[level]
-        summary = f"这是你在多场真实协作里的稳定高位层级。当前已到 {level}，继续补齐短板后再看下一次破境。"
+        summary = f"这是你在多场真实协作里的稳定层次。当前已到 {level}，补齐短板后再看下一次突破。"
     else:
         persona_title = f"{level} 协作等级"
         title = "AI 协作能力证书"
@@ -495,7 +545,7 @@ def _build_user_certificate(score: int, metrics: list[MetricScore], transcript: 
         title=f"{level}修士",
         subtitle=REALM_DESCRIPTIONS[level],
         tags=[aura, top_trait, second_trait],
-        summary=f"此番观气，已入{level}之境，{aura}。你如今长于{top_trait}，但{weak_trait}仍是当前关隘，补齐此处后才好再望上境。",
+        summary=f"照此行迹，已入{level}之境，{aura}。你如今长于{top_trait}，但{weak_trait}仍是眼下短板，补齐此处后才好再望上境。",
     )
     evidence = [
         f"主修道法：{_user_metric_phrase(top[0].name, style='title')} {top[0].score}/100，{top[0].rationale}",
@@ -547,6 +597,93 @@ def _pick_level(score: int, table: list[tuple[int, str]]) -> str:
         if score >= threshold:
             current = name
     return current
+
+
+def _pick_rank(score: int, table: list[tuple[int, str]]) -> int:
+    current = 0
+    for index, (threshold, _) in enumerate(table):
+        if score >= threshold:
+            current = index
+    return current
+
+
+def _cap_score_by_capability(track: str, score: int, cap_rank: int) -> int:
+    table = LEVEL_TABLES[track]
+    if cap_rank >= len(table) - 1:
+        return score
+    max_score = table[cap_rank + 1][0] - 1
+    return min(score, max_score)
+
+
+def _metric_map(metrics: list[MetricScore]) -> dict[str, int]:
+    return {item.name: item.score for item in metrics}
+
+
+def _has_method_sediment(messages) -> bool:
+    text = " ".join(item.text.lower() for item in messages)
+    return any(token in text for token in METHOD_SEDIMENT_TOKENS)
+
+
+def _user_cap_rank(
+    user_metrics: list[MetricScore],
+    assistant_metrics: list[MetricScore],
+    *,
+    total_messages: int,
+    tool_calls: int,
+    session_count: int,
+    method_sediment: bool,
+) -> int:
+    user_map = _metric_map(user_metrics)
+    assistant_map = _metric_map(assistant_metrics)
+    cap = 2
+    if total_messages >= 4 and user_map.get("协作节奏", 0) >= 55 and user_map.get("上下文供给", 0) >= 40:
+        cap = 3
+    if method_sediment:
+        cap = max(cap, 4)
+    if assistant_map.get("执行落地", 0) >= 50 and tool_calls >= 1:
+        cap = max(cap, 5)
+    if assistant_map.get("执行落地", 0) >= 50 and assistant_map.get("工具调度", 0) >= 40 and tool_calls >= 2:
+        cap = max(cap, 6)
+    if assistant_map.get("工具调度", 0) >= 50 and assistant_map.get("上下文承接", 0) >= 45 and tool_calls >= 3:
+        cap = max(cap, 7)
+    if assistant_map.get("验证闭环", 0) >= 45 and assistant_map.get("补救适配", 0) >= 45 and tool_calls >= 4:
+        cap = max(cap, 8)
+    if session_count >= 3 and method_sediment and assistant_map.get("验证闭环", 0) >= 45:
+        cap = max(cap, 9)
+    if session_count >= 5 and assistant_map.get("验证闭环", 0) >= 55 and assistant_map.get("补救适配", 0) >= 55:
+        cap = max(cap, 10)
+    if session_count >= 8 and assistant_map.get("执行落地", 0) >= 60 and assistant_map.get("验证闭环", 0) >= 60 and assistant_map.get("工具调度", 0) >= 60:
+        cap = max(cap, 11)
+    return cap
+
+
+def _assistant_cap_rank(
+    assistant_metrics: list[MetricScore],
+    *,
+    total_messages: int,
+    tool_calls: int,
+    session_count: int,
+    method_sediment: bool,
+) -> int:
+    assistant_map = _metric_map(assistant_metrics)
+    cap = 2
+    if total_messages >= 2 and assistant_map.get("执行落地", 0) >= 45:
+        cap = 3
+    if method_sediment:
+        cap = max(cap, 4)
+    if assistant_map.get("执行落地", 0) >= 50 and tool_calls >= 1:
+        cap = max(cap, 5)
+    if assistant_map.get("工具调度", 0) >= 40 and assistant_map.get("上下文承接", 0) >= 40 and tool_calls >= 2:
+        cap = max(cap, 6)
+    if assistant_map.get("工具调度", 0) >= 50 and assistant_map.get("补救适配", 0) >= 45 and tool_calls >= 3:
+        cap = max(cap, 7)
+    if assistant_map.get("验证闭环", 0) >= 45 and assistant_map.get("上下文承接", 0) >= 45 and tool_calls >= 4:
+        cap = max(cap, 8)
+    if session_count >= 3 and assistant_map.get("验证闭环", 0) >= 45 and assistant_map.get("执行落地", 0) >= 55:
+        cap = max(cap, 9)
+    if session_count >= 5 and assistant_map.get("验证闭环", 0) >= 55 and assistant_map.get("工具调度", 0) >= 55 and assistant_map.get("执行落地", 0) >= 60:
+        cap = max(cap, 10)
+    return cap
 
 
 def _metric_tags(metrics: list[MetricScore], track: str = "assistant") -> list[str]:
@@ -664,11 +801,11 @@ def _growth_plan(metrics: list[MetricScore], user_track: bool) -> list[str]:
         if item.name == "目标清晰度":
             plans.append("下次闭关前，先把诉求写成“目标 + 约束 + 输出物 + 验收”四段式。")
         elif item.name == "上下文供给":
-            plans.append("把关键文件、路径、模型、运行方式一并备齐，再开炉炼化。")
+            plans.append("把前因、条件与来路一并备齐，再开炉。")
         elif item.name == "迭代修正力":
             plans.append("每轮只动一个核心变量，守住其余条件，避免气机紊乱。")
         elif item.name == "验收意识":
-            plans.append("每一轮收功时，都要求附上验证命令或可观察结果。")
+            plans.append("每一轮收功时，都要附上看得见的凭据。")
         elif item.name == "协作节奏":
             plans.append("把大目标拆成三重关，每破一关便收一次结果。")
         elif item.name == "执行落地":
@@ -684,7 +821,7 @@ def _growth_plan(metrics: list[MetricScore], user_track: bool) -> list[str]:
     if not plans:
         plans.append("继续累计高质量回合，下个周期冲击更高证书。")
     if user_track:
-        plans.append("待下一轮炼化结束，再持最新卷宗前来验境。")
+        plans.append("待下一轮问答结束，再来看境界变化。")
     else:
         plans.append("让 AI 在下一轮任务里强制执行“实现 -> 验证 -> 回报”节奏。")
     return plans[:3]
@@ -714,7 +851,7 @@ def _explain_iteration(messages) -> str:
 def _explain_verification(transcript: Transcript) -> str:
     if transcript.tool_calls >= 3:
         return "会话里有明显的读取、搜索或验证动作。"
-    return "验证动作不算多，可以更主动要求测试与回收。"
+    return "验证动作不算多，可以更主动要求测试与确认结果。"
 
 
 def _explain_collaboration(user_messages, assistant_messages) -> str:

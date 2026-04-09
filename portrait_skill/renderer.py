@@ -28,7 +28,7 @@ def render_markdown(
     talent = infer_talent(analysis.transcript)
     token_label = "消耗 token" if certificate_choice == "assistant" else "灵气流转"
     token_lines = _render_token_lines(analysis.transcript.token_usage, cultivation_label="修炼时长", token_label=token_label)
-    certificate_token_note = _render_period_token_note(analysis.transcript.token_usage, label="本次卷宗消耗")
+    certificate_token_note = _render_period_token_note(analysis.transcript.token_usage, label="本次记录消耗")
     sections = [
         "# 画像.skill 画像报告",
         "",
@@ -194,16 +194,16 @@ def _render_certificate(certificate: Certificate, token_note: str | None = None)
     lines = [
         f"## {certificate.title}",
         f"**境界**：{certificate.level}",
-        f"**命格**：{certificate.persona.title}",
-        f"**道解**：{certificate.persona.subtitle}",
-        f"**气象**：{' / '.join(certificate.persona.tags)}",
+        f"**根骨**：{certificate.persona.title}",
+        f"**修行**：{certificate.persona.subtitle}",
+        f"**所长**：{' / '.join(certificate.persona.tags)}",
         f"**总评**：{certificate.persona.summary}",
         "",
-        "### 观气所得",
+        "### 所见",
     ]
     for item in certificate.evidence:
         lines.append(f"- {item}")
-    lines.extend(["", "### 破境机缘"])
+    lines.extend(["", "### 破境之法"])
     for item in certificate.growth_plan:
         lines.append(f"- {item}")
     return "\n".join(lines)
@@ -216,16 +216,16 @@ def _render_certificate_dict(certificate: dict[str, object], token_note: str | N
     lines = [
         f"## {certificate['title']}",
         f"**境界**：{certificate['level']}",
-        f"**命格**：{persona['title']}",
-        f"**道解**：{persona['subtitle']}",
-        f"**气象**：{' / '.join(persona['tags'])}",
+        f"**根骨**：{persona['title']}",
+        f"**修行**：{persona['subtitle']}",
+        f"**所长**：{' / '.join(persona['tags'])}",
         f"**总评**：{persona['summary']}",
         "",
-        "### 观气所得",
+        "### 所见",
     ]
     for item in certificate["evidence"]:
         lines.append(f"- {item}")
-    lines.extend(["", "### 破境机缘"])
+    lines.extend(["", "### 破境之法"])
     for item in certificate["growth_plan"]:
         lines.append(f"- {item}")
     return "\n".join(lines)
@@ -255,7 +255,7 @@ def _render_assistant_certificate_dict(certificate: dict[str, object], token_not
         f"## {certificate['title']}",
         f"**等级**：{certificate['level']}",
         f"**能力**：能够{_assistant_ability(str(certificate['level']), persona['subtitle'])}",
-        f"**判词**：{_assistant_certificate_verdict(certificate["evidence"], str(certificate['level']), persona['subtitle'])}",
+        f"**判词**：{_assistant_certificate_verdict(certificate['evidence'], str(certificate['level']), persona['subtitle'])}",
         token_note or _render_certificate_token_line(certificate),
         "",
         "### 判定依据",

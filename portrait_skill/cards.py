@@ -64,8 +64,8 @@ ASSISTANT_BEHAVIOR_TEXT = {
         "weak": "工具使用还不够主动",
     },
     "验证闭环": {
-        "strong": "会带着验证和回收往前走",
-        "weak": "验证动作偏少，回收还不够主动",
+        "strong": "会把验证和结果确认一起推进",
+        "weak": "验证动作偏少，结果确认还不够主动",
     },
     "上下文承接": {
         "strong": "能承接关键上下文，较少跑偏",
@@ -79,24 +79,24 @@ ASSISTANT_BEHAVIOR_TEXT = {
 
 USER_BEHAVIOR_TEXT = {
     "目标清晰度": {
-        "strong": "诉求说得更清楚，目标和边界明确",
-        "weak": "诉求还不够早收束到目标和边界",
+        "strong": "所求明确，轻重先后都说得清楚",
+        "weak": "所求仍散，轻重先后还未理顺",
     },
     "上下文供给": {
-        "strong": "会主动补足路径、文件和环境信息",
-        "weak": "上下文还给得不够足",
+        "strong": "前因后果交代得更全，来龙去脉都备得齐",
+        "weak": "前因后果交代仍少，来龙去脉还不够全",
     },
     "迭代修正力": {
-        "strong": "会顺着结果继续定向修正",
-        "weak": "定向修正还不够多",
+        "strong": "见势不对便肯回身修正，不急着一条路走到底",
+        "weak": "修正还不够勤，常常停在第一轮",
     },
     "验收意识": {
-        "strong": "会主动追问验证和回收结果",
-        "weak": "验证与回收追得还不够紧",
+        "strong": "每到收功时都肯细看结果，不轻易草草翻过",
+        "weak": "收功时看得还不够细，结果尚未盯紧",
     },
     "协作节奏": {
-        "strong": "来回节奏顺，双方能共同推进",
-        "weak": "回合同步还不够稳",
+        "strong": "往返有序，彼此呼应，推进时不乱",
+        "weak": "步调仍乱，前后呼应还不够稳",
     },
 }
 
@@ -130,7 +130,9 @@ def render_user_portrait_card(payload: dict[str, object]) -> str:
     level = str(certificate.get("level", "凡人"))
     summary_lines = _user_portrait_verdict_lines(payload, level, fallback=str(persona.get("summary") or ""))
     subtitle = str(persona.get("subtitle") or "")
-    growth_value = _first_line(_as_list(certificate.get("growth_plan")), fallback="再炼一轮，稳住当前气脉，再冲下一境。")
+    growth_value = _xianxia_guidance_text(
+        _first_line(_as_list(certificate.get("growth_plan")), fallback="再炼一轮，稳住当前气脉，再冲下一境。")
+    )
 
     return f"""<svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -172,9 +174,9 @@ def render_user_portrait_card(payload: dict[str, object]) -> str:
     <rect x="236" y="174" width="728" height="1232" rx="28" stroke="#A56A2A" stroke-opacity="0.34" stroke-width="2" stroke-dasharray="10 10"/>
   </g>
 
-  <text x="600" y="232" fill="url(#ink)" font-size="34" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">画像</text>
-  <text x="600" y="304" fill="url(#ink)" font-size="100" text-anchor="middle" font-family="STKaiti, KaiTi, serif">修仙画像</text>
-  {_text_lines(_wrap_text(_card_subtitle(subtitle or "观卷知命，照见此身灵根、气海与关隘"), 22, limit=2), x=600, y=346, font_size=21, line_height=28, fill="#85512A", anchor="middle", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif")}
+  <text x="600" y="250" fill="url(#ink)" font-size="34" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">画像</text>
+  <text x="600" y="324" fill="url(#ink)" font-size="100" text-anchor="middle" font-family="STKaiti, KaiTi, serif">修仙画像</text>
+  {_text_lines(_wrap_text(_card_subtitle(subtitle or "照见此身根骨、修为与机缘"), 22, limit=2), x=600, y=366, font_size=21, line_height=28, fill="#7B421B", anchor="middle", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif")}
   <g>
     <circle cx="600" cy="540" r="126" fill="#6A2E13" fill-opacity="0.05" stroke="#7F3415" stroke-width="3"/>
     <circle cx="600" cy="540" r="98" stroke="#8B3C19" stroke-opacity="0.28" stroke-width="2" stroke-dasharray="8 10"/>
@@ -184,15 +186,15 @@ def render_user_portrait_card(payload: dict[str, object]) -> str:
 
   <g>
     <rect x="214" y="676" width="772" height="292" rx="30" fill="#FFF7EA" fill-opacity="0.78" stroke="#A56A2A" stroke-opacity="0.24" stroke-width="2"/>
-    <text x="600" y="744" fill="#8A562D" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">命主判词</text>
+    <text x="600" y="744" fill="#6B3817" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">仙途评语</text>
     {_text_lines(summary_lines, x=600, y=810, font_size=28, line_height=38, fill="#4C2412", anchor="middle", family="STKaiti, KaiTi, serif", weight="700")}
   </g>
 
   <g>
     <rect x="214" y="1012" width="772" height="228" rx="30" fill="#FFF6E4" fill-opacity="0.82" stroke="#A56A2A" stroke-opacity="0.22" stroke-width="2"/>
-    <text x="600" y="1066" fill="#8A562D" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">破境指引</text>
+    <text x="600" y="1066" fill="#6B3817" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">破境之法</text>
     {_text_lines(_wrap_text(growth_value, 21, limit=3), x=600, y=1134, font_size=28, line_height=38, fill="#4F2812", anchor="middle", family="STKaiti, KaiTi, serif", weight="700")}
-    <text x="600" y="1196" fill="#81502A" font-size="18" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">守住一条主线，再启下一轮炼化</text>
+    <text x="600" y="1196" fill="#81502A" font-size="18" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">守住一条主线，再寻下一次破境</text>
   </g>
 
   <line x1="320" y1="1382" x2="880" y2="1382" stroke="#A56A2A" stroke-opacity="0.18" stroke-width="2"/>
@@ -257,8 +259,8 @@ def render_assistant_certificate_card(payload: dict[str, object]) -> str:
   <text x="600" y="308" fill="#10263A" font-size="70" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700">AI 协作能力证书</text>
   <text x="600" y="356" fill="#566A7E" font-size="22" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">基于真实会话稳定定级</text>
   <g>
-    <rect x="238" y="400" width="724" height="860" rx="42" fill="{_escape(str(theme.get('panel_bg', '#162B49')))}"/>
-    <rect x="268" y="430" width="664" height="800" rx="32" stroke="{_escape(str(theme.get('accent', '#7EAEFF')))}" stroke-opacity="0.36" stroke-width="2"/>
+    <rect x="238" y="392" width="724" height="886" rx="42" fill="{_escape(str(theme.get('panel_bg', '#162B49')))}"/>
+    <rect x="268" y="422" width="664" height="826" rx="32" stroke="{_escape(str(theme.get('accent', '#7EAEFF')))}" stroke-opacity="0.36" stroke-width="2"/>
     <rect x="454" y="468" width="292" height="56" rx="28" fill="#FFFFFF" fill-opacity="0.08"/>
     <text x="600" y="504" fill="#E3EBF3" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" letter-spacing="4">协作能力等级</text>
     <text x="600" y="690" fill="{_escape(str(theme.get('accent', '#7EAEFF')))}" font-size="248" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-weight="800">{_escape(level)}</text>
@@ -267,14 +269,14 @@ def render_assistant_certificate_card(payload: dict[str, object]) -> str:
     <text x="600" y="876" fill="#DDE6EE" font-size="21" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">能够</text>
     {_text_lines(_wrap_text(ability, 13, limit=2), x=600, y=928, font_size=40, line_height=48, fill="#FFFFFF", anchor="middle", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif", weight="700")}
     <line x1="324" y1="1024" x2="876" y2="1024" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="2"/>
-    <text x="600" y="1082" fill="#DDE6EE" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" letter-spacing="4">判词</text>
-    {_text_lines(verdict_lines, x=322, y=1142, font_size=26, line_height=36, fill="#F6FAFD", anchor="start", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif", weight="500")}
+    <text x="600" y="1084" fill="#DDE6EE" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" letter-spacing="4">判词</text>
+    {_text_lines(verdict_lines, x=322, y=1146, font_size=26, line_height=36, fill="#F6FAFD", anchor="start", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif", weight="500")}
   </g>
 
   <g>
-    <rect x="286" y="1298" width="628" height="116" rx="30" fill="#FFFFFF" fill-opacity="0.96"/>
-    <text x="600" y="1342" fill="#5A6D81" font-size="18" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">{_escape(_truncate_text(token_period, 30))}</text>
-    <text x="600" y="1394" fill="#18314E" font-size="32" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700">{_escape(_truncate_text(token_value, 22))}</text>
+    <rect x="286" y="1316" width="628" height="116" rx="30" fill="#FFFFFF" fill-opacity="0.96"/>
+    <text x="600" y="1360" fill="#5A6D81" font-size="18" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">{_escape(_truncate_text(token_period, 30))}</text>
+    <text x="600" y="1412" fill="#18314E" font-size="32" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700">{_escape(_truncate_text(token_value, 22))}</text>
   </g>
 
   <line x1="318" y1="1476" x2="882" y2="1476" stroke="#D4DDE6" stroke-width="2"/>
@@ -487,7 +489,7 @@ def _xianxia_period_label(payload: dict[str, object]) -> str:
     sessions_used = payload.get("sessions_used")
     if isinstance(sessions_used, int) and sessions_used > 1:
         return f"{sessions_used} 场会话"
-    return "本次卷宗"
+    return "此番问答"
 
 
 def _certificate_period_label(payload: dict[str, object]) -> str:
@@ -499,7 +501,7 @@ def _certificate_period_label(payload: dict[str, object]) -> str:
     sessions_used = payload.get("sessions_used")
     if isinstance(sessions_used, int) and sessions_used > 1:
         return f"{sessions_used} 场会话累计"
-    return "本次卷宗"
+    return "本次记录"
 
 
 def _ability_text(level: str, value: str) -> str:
@@ -564,10 +566,10 @@ def _user_portrait_verdict_lines(payload: dict[str, object], level: str, fallbac
     top_name = XI_METRIC_NAMES.get(top_name_raw, top_name_raw or "长处")
     low_name = XI_WEAK_METRIC_NAMES.get(low_name_raw, low_name_raw or "关隘")
     return [
-        f"此番观气，已至{level}之境。",
+        f"照此行迹，已至{level}之境。",
         f"{top_name}已成气候，{_metric_behavior(top_name_raw, 'strong', track='user')}。",
         f"{low_name}未稳，{_metric_behavior(low_name_raw, 'weak', track='user')}。",
-        f"本卷 {message_count} 条对话，{tool_calls} 次分身，炼化 {token_total} 枚灵气。",
+        f"此番 {message_count} 条对话，{tool_calls} 次分身，耗去 {token_total} 枚灵气。",
     ]
 
 
@@ -601,7 +603,27 @@ def _escape(value: str) -> str:
 def _card_subtitle(value: str) -> str:
     cleaned = " ".join(value.split())
     cleaned = cleaned.replace("skill", "技法").replace("workflow", "流程").replace("prompt", "提示法").replace("agent", "分身")
+    cleaned = cleaned.replace("模板", "章法").replace("模块", "法门").replace("SOP", "章法")
     cleaned = cleaned.replace(" / ", "、")
+    return cleaned
+
+
+def _xianxia_guidance_text(text: str) -> str:
+    cleaned = " ".join((text or "").split())
+    replacements = {
+        "验证命令或可观察结果": "看见实证",
+        "验证命令": "看见实证",
+        "可观察结果": "看见实证",
+        "目标 + 约束 + 输出物 + 验收": "先定目标、边界与成法",
+        "关键文件、路径、模型、运行方式": "把来路与条件先备齐",
+        "连续会话里重复目标名词": "反复守住题眼",
+        "缩小范围，改成最小可用版本再突破": "先收束，再图突破",
+        "让 AI 先报第一步，再做实现，避免空泛总结": "先落第一子，再徐徐推进",
+        "鼓励 AI 先读仓库、跑命令、看真实日志，再给方案": "先探来路，再定章法",
+        "要求 AI 说明“改了什么、怎么验、哪里还没验”": "每次收功，都把变化与结果说清",
+    }
+    for src, dst in replacements.items():
+        cleaned = cleaned.replace(src, dst)
     return cleaned
 
 

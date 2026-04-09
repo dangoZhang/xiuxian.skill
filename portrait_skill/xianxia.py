@@ -25,7 +25,7 @@ def derive_xianxia_profile(payload: dict[str, object]) -> list[dict[str, str]]:
     metrics = _as_list(payload.get("user_metrics"))
     top_metric = _best_metric(metrics)
     total_tokens = _token_total(payload)
-    source = str(transcript.get("source") or payload.get("source") or "卷宗")
+    source = str(transcript.get("source") or payload.get("source") or "记录")
     models = _models(payload)
     providers = _providers(payload)
     talent = infer_talent_from_models(models) or {}
@@ -45,7 +45,7 @@ def derive_xianxia_profile(payload: dict[str, object]) -> list[dict[str, str]]:
             "detail": str(talent.get("aptitude") or "资质未明"),
         },
         {
-            "term": "灵脉",
+            "term": "来路",
             "value": _compose_lingmai(source, primary_model, providers),
             "detail": "模型平台与主炉来路",
         },
@@ -62,17 +62,17 @@ def derive_xianxia_profile(payload: dict[str, object]) -> list[dict[str, str]]:
         {
             "term": "功法",
             "value": _subtitle_to_gongfa(subtitle),
-            "detail": "你现在真正会使的那门法",
+            "detail": "你如今真正会使的法门",
         },
         {
             "term": "分身",
             "value": _tool_call_phrase(tool_calls),
-            "detail": "可供役使的工具与分身痕迹",
+            "detail": "可供役使的分身痕迹",
         },
         {
-            "term": "阅卷",
+            "term": "历练",
             "value": _review_phrase(message_count, sessions_used),
-            "detail": "从对话与卷宗中观其行迹",
+            "detail": "从对话与记录中看其行止",
         },
     ]
     if _has_method_sediment(subtitle):
@@ -96,13 +96,13 @@ def derive_xianxia_profile(payload: dict[str, object]) -> list[dict[str, str]]:
 
 def _compose_lingmai(source: str, primary_model: str, providers: list[str]) -> str:
     source_text = {
-        "codex": "本地卷宗",
-        "claude": "外门卷宗",
-        "opencode": "外门卷宗",
-        "openclaw": "外门卷宗",
-        "cursor": "外门卷宗",
-        "vscode": "本地卷宗",
-    }.get(source.lower(), "卷宗来路")
+        "codex": "本地",
+        "claude": "外门",
+        "opencode": "外门",
+        "openclaw": "外门",
+        "cursor": "外门",
+        "vscode": "本地",
+    }.get(source.lower(), "未知")
     if primary_model or providers:
         return source_text
     return source_text
@@ -121,10 +121,10 @@ def _tool_call_phrase(tool_calls: int) -> str:
 
 def _review_phrase(message_count: int, sessions_used: Any) -> str:
     if isinstance(sessions_used, int) and sessions_used > 1:
-        return f"炼化 {sessions_used} 场卷宗"
+        return f"历经 {sessions_used} 场问答"
     if message_count > 0:
-        return f"阅过 {message_count} 条对话"
-    return "初阅卷宗"
+        return f"历经 {message_count} 条对话"
+    return "初经问答"
 
 
 def _subtitle_to_gongfa(subtitle: str) -> str:
@@ -133,7 +133,7 @@ def _subtitle_to_gongfa(subtitle: str) -> str:
         return "功法未定"
     lowered = cleaned.lower()
     if any(token in lowered for token in ["skill", "workflow", "模板", "模块", "sop"]):
-        return "模板成法"
+        return "章法初成"
     cleaned = cleaned.replace("开始把自己的做法封成", "").replace("已经有", "").strip(" ，。")
     return _truncate(cleaned or subtitle, 18)
 
@@ -152,7 +152,7 @@ def _period_label(payload: dict[str, object]) -> str:
     sessions_used = payload.get("sessions_used")
     if isinstance(sessions_used, int) and sessions_used > 1:
         return f"{sessions_used} 场会话累计"
-    return "本次卷宗"
+    return "此番问答"
 
 
 def _best_metric(metrics: list[object]) -> dict[str, object]:
