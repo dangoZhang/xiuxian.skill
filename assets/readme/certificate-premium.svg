@@ -37,34 +37,43 @@
     <rect x="228" y="178" width="744" height="1256" rx="18" stroke="#C1E56A" stroke-opacity="0.24" stroke-width="2" stroke-dasharray="8 10"/>
   </g>
 
-  <text x="600" y="234" fill="#9AA56D" font-size="32" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" letter-spacing="3">画像.skill</text>
-  <text x="600" y="314" fill="#10263A" font-size="74" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700">AI 协作能力证书</text>
-  <text x="600" y="362" fill="#5E7287" font-size="23" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">真实会话稳定定级</text>
+  <text x="600" y="234" fill="#9AA56D" font-size="32" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" letter-spacing="3">画像</text>
+  <text x="600" y="308" fill="#10263A" font-size="70" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700">AI 协作能力证书</text>
+  <text x="600" y="356" fill="#566A7E" font-size="22" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">基于真实会话稳定定级</text>
   
   <g>
-    <rect x="258" y="388" width="312" height="46" rx="14" fill="#EAF1FF" fill-opacity="0.88" stroke="#315FBC" stroke-opacity="0.18" stroke-width="1.5"/>
-    <text x="276" y="417" fill="#72889C" font-size="16" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">持有人</text>
-    <text x="552" y="417" fill="#18314E" font-size="18" text-anchor="end" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">张道友</text>
+    <rect x="238" y="392" width="338" height="52" rx="16" fill="#F2F6FF" fill-opacity="0.99" stroke="#315FBC" stroke-opacity="0.24" stroke-width="1.5"/>
+    <text x="256" y="424" fill="#50657B" font-size="16" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">持有人</text>
+    <text x="558" y="424" fill="#18314E" font-size="18" text-anchor="end" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">张道友</text>
   </g>
   
   <g>
-    <rect x="630" y="388" width="312" height="46" rx="14" fill="#EAF1FF" fill-opacity="0.88" stroke="#315FBC" stroke-opacity="0.18" stroke-width="1.5"/>
-    <text x="648" y="417" fill="#72889C" font-size="16" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">生成时间</text>
-    <text x="924" y="417" fill="#425B73" font-size="18" text-anchor="end" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">2026-04-09 11:39</text>
+    <rect x="624" y="392" width="338" height="52" rx="16" fill="#F2F6FF" fill-opacity="0.99" stroke="#315FBC" stroke-opacity="0.24" stroke-width="1.5"/>
+    <text x="642" y="424" fill="#50657B" font-size="16" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">生成时间</text>
+    <text x="944" y="424" fill="#344A63" font-size="18" text-anchor="end" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">2026-04-09 12:08</text>
   </g>
 
   <g>
-    <rect x="258" y="462" width="684" height="664" rx="42" fill="#303B15"/>
-    <rect x="286" y="490" width="628" height="608" rx="32" stroke="#C1E56A" stroke-opacity="0.32" stroke-width="2"/>
-    <text x="600" y="680" fill="#C1E56A" font-size="236" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-weight="800">L4</text>
-    <text x="600" y="748" fill="#ECF2F8" font-size="26" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" letter-spacing="6">CURRENT LEVEL</text>
-    <line x1="360" y1="822" x2="840" y2="822" stroke="#C1E56A" stroke-opacity="0.16" stroke-width="2"/>
-    <text x="600" y="884" fill="#A6B7C8" font-size="22" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">能够</text>
-    <text x="600" y="944" fill="#F5F8FB" font-size="38" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700"><tspan x="600" dy="0">重复跑通常见 workflow</tspan></text>
-    <rect x="332" y="1010" width="536" height="76" rx="20" fill="#FFFFFF" fill-opacity="0.06"/>
-    <text x="600" y="1058" fill="#C3D0DB" font-size="24" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">本次卷宗 消耗 2,892 token</text>
+    <rect x="238" y="466" width="724" height="818" rx="42" fill="#303B15"/>
+    <rect x="268" y="496" width="664" height="758" rx="32" stroke="#C1E56A" stroke-opacity="0.36" stroke-width="2"/>
+    <rect x="454" y="532" width="292" height="56" rx="28" fill="#FFFFFF" fill-opacity="0.08"/>
+    <text x="600" y="568" fill="#E3EBF3" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" letter-spacing="4">协作能力等级</text>
+    <text x="600" y="756" fill="#C1E56A" font-size="248" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-weight="800">L4</text>
+    <text x="600" y="820" fill="#F4F8FC" font-size="24" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" letter-spacing="6">当前等级</text>
+    <line x1="344" y1="874" x2="856" y2="874" stroke="#C1E56A" stroke-opacity="0.22" stroke-width="2"/>
+    <text x="600" y="938" fill="#DDE6EE" font-size="21" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">能够</text>
+    <text x="600" y="990" fill="#FFFFFF" font-size="40" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700"><tspan x="600" dy="0">重复跑通常见流程</tspan></text>
+    <line x1="372" y1="1084" x2="828" y2="1084" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="2"/>
+    <text x="600" y="1134" fill="#DDE6EE" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" letter-spacing="4">判词</text>
+    <text x="600" y="1190" fill="#F6FAFD" font-size="25" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="500"><tspan x="600" dy="0">已能重复跑通常见流程，五维均势 48/100。</tspan><tspan x="600" dy="34">补救适配 64/100 最稳，验证闭环 34/100 待补。</tspan><tspan x="600" dy="34">本轮 4 条消息，2 次工具，2,892 枚令牌。</tspan></text>
   </g>
 
-  <line x1="318" y1="1248" x2="882" y2="1248" stroke="#D4DDE6" stroke-width="2"/>
-  <text x="600" y="1306" fill="#72889C" font-size="20" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">画像.skill · Certified Collaboration Level</text>
+  <g>
+    <rect x="286" y="1326" width="628" height="116" rx="30" fill="#FFFFFF" fill-opacity="0.96"/>
+    <text x="600" y="1370" fill="#5A6D81" font-size="18" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">本次卷宗</text>
+    <text x="600" y="1422" fill="#18314E" font-size="32" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700">消耗 2,892 枚令牌</text>
+  </g>
+
+  <line x1="318" y1="1476" x2="882" y2="1476" stroke="#D4DDE6" stroke-width="2"/>
+  <text x="600" y="1526" fill="#72889C" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">画像 · AI 协作能力定级</text>
 </svg>

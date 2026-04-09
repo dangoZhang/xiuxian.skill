@@ -51,7 +51,7 @@ def derive_xianxia_profile(payload: dict[str, object]) -> list[dict[str, str]]:
         },
         {
             "term": "灵气",
-            "value": f"{_fmt_int(total_tokens)} token" if total_tokens else "灵气未显",
+            "value": f"{_fmt_int(total_tokens)} 枚令牌" if total_tokens else "灵气未显",
             "detail": _period_label(payload),
         },
         {
@@ -67,7 +67,7 @@ def derive_xianxia_profile(payload: dict[str, object]) -> list[dict[str, str]]:
         {
             "term": "分身",
             "value": _tool_call_phrase(tool_calls),
-            "detail": "可供役使的工具与 agent 痕迹",
+            "detail": "可供役使的工具与分身痕迹",
         },
         {
             "term": "搜魂",
@@ -79,7 +79,7 @@ def derive_xianxia_profile(payload: dict[str, object]) -> list[dict[str, str]]:
         profile.append(
             {
                 "term": "传功堂",
-                "value": "skill / 模板 / workflow 已现雏形",
+                "value": "法门已可传授",
                 "detail": "开始把经验炼成可复用方法",
             }
         )
@@ -95,11 +95,16 @@ def derive_xianxia_profile(payload: dict[str, object]) -> list[dict[str, str]]:
 
 
 def _compose_lingmai(source: str, primary_model: str, providers: list[str]) -> str:
-    source_text = source.upper() if source.lower() in {"codex", "vscode"} else source.capitalize()
-    if primary_model:
-        return _truncate(f"{source_text} · {primary_model}", 18)
-    if providers:
-        return _truncate(f"{source_text} · {providers[0]}", 18)
+    source_text = {
+        "codex": "本地卷宗",
+        "claude": "长卷灵脉",
+        "opencode": "开源灵脉",
+        "openclaw": "爪印灵脉",
+        "cursor": "游标灵脉",
+        "vscode": "本地卷宗",
+    }.get(source.lower(), "卷宗灵脉")
+    if primary_model or providers:
+        return source_text
     return source_text
 
 
@@ -107,8 +112,11 @@ def _tool_call_phrase(tool_calls: int) -> str:
     if tool_calls <= 0:
         return "此轮尚未外放分身"
     if tool_calls == 1:
-        return "役使 1 次分身"
-    return f"役使 {tool_calls} 次分身"
+        return "役使一具分身"
+    if tool_calls <= 9:
+        numerals = "零一二三四五六七八九"
+        return f"役使{numerals[tool_calls]}具分身"
+    return f"役使 {tool_calls} 具分身"
 
 
 def _souhun_phrase(message_count: int, sessions_used: Any) -> str:
@@ -123,6 +131,9 @@ def _subtitle_to_gongfa(subtitle: str) -> str:
     cleaned = " ".join(subtitle.split())
     if not cleaned:
         return "功法未定"
+    lowered = cleaned.lower()
+    if any(token in lowered for token in ["skill", "workflow", "模板", "模块", "sop"]):
+        return "模板成法"
     cleaned = cleaned.replace("开始把自己的做法封成", "").replace("已经有", "").strip(" ，。")
     return _truncate(cleaned or subtitle, 18)
 

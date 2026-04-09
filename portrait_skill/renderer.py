@@ -9,10 +9,10 @@ AI_LEVEL_ABILITIES = {
     "L1": "完成单轮问答",
     "L2": "感知提问方式对结果的影响",
     "L3": "稳定完成简单任务",
-    "L4": "重复跑通常见 workflow",
-    "L5": "把经验封成模板或 skill",
+    "L4": "重复跑通常见流程",
+    "L5": "把经验封成模板技法",
     "L6": "先替你推进一段具体工作",
-    "L7": "协同多个 agent 与工具完成任务",
+    "L7": "协同多个分身与工具完成任务",
     "L8": "承担能力层与系统层工作",
     "L9": "进入真实业务回路并持续回流",
     "L10": "把方法复制到团队与客户场景",
@@ -236,6 +236,7 @@ def _render_assistant_certificate(certificate: Certificate, token_note: str | No
         f"## {certificate.title}",
         f"**等级**：{certificate.level}",
         f"**能力**：能够{_assistant_ability(certificate.level, certificate.persona.subtitle)}",
+        f"**判词**：{_assistant_certificate_verdict(certificate.evidence, certificate.level, certificate.persona.subtitle)}",
         token_note or _render_certificate_token_line(certificate),
         "",
         "### 判定依据",
@@ -254,6 +255,7 @@ def _render_assistant_certificate_dict(certificate: dict[str, object], token_not
         f"## {certificate['title']}",
         f"**等级**：{certificate['level']}",
         f"**能力**：能够{_assistant_ability(str(certificate['level']), persona['subtitle'])}",
+        f"**判词**：{_assistant_certificate_verdict(certificate["evidence"], str(certificate['level']), persona['subtitle'])}",
         token_note or _render_certificate_token_line(certificate),
         "",
         "### 判定依据",
@@ -348,6 +350,21 @@ def _assistant_ability(level: str, value: str) -> str:
     if cleaned.startswith("开始"):
         return cleaned[2:]
     return cleaned
+
+
+def _assistant_certificate_verdict(evidence: list[str], level: str, subtitle: str) -> str:
+    top_name = "执行推进"
+    low_name = "补短板"
+    if evidence:
+        first = str(evidence[0]).split("：", 1)
+        if len(first) == 2:
+            top_name = first[1].split(" ", 1)[0]
+        if len(evidence) > 1:
+            second = str(evidence[1]).split("：", 1)
+            if len(second) == 2:
+                low_name = second[1].split(" ", 1)[0]
+    ability = _assistant_ability(level, subtitle)
+    return f"当前已能{ability}，{top_name}更稳，{low_name}仍可继续补强。"
 
 
 def _analysis_xianxia_payload(analysis: Analysis) -> dict[str, object]:

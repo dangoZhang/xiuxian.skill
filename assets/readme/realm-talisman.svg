@@ -38,81 +38,43 @@
     <rect x="236" y="174" width="728" height="1232" rx="28" stroke="#A56A2A" stroke-opacity="0.34" stroke-width="2" stroke-dasharray="10 10"/>
   </g>
 
-  <text x="600" y="232" fill="url(#ink)" font-size="34" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">画像.skill</text>
-  <text x="600" y="308" fill="url(#ink)" font-size="102" text-anchor="middle" font-family="STKaiti, KaiTi, serif">修仙画像</text>
-  <text x="600" y="356" fill="#7A461F" font-size="23" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">开始把自己的做法封成 skill / 模板 / 模块</text>
+  <text x="600" y="232" fill="url(#ink)" font-size="34" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">画像</text>
+  <text x="600" y="304" fill="url(#ink)" font-size="100" text-anchor="middle" font-family="STKaiti, KaiTi, serif">修仙画像</text>
+  <text x="600" y="346" fill="#85512A" font-size="21" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="600" dy="0">开始把自己的做法封成技法、模板、模块</tspan></text>
   
   <g>
-    <rect x="266" y="386" width="278" height="44" rx="14" fill="#6D3318" fill-opacity="0.10" stroke="#A56A2A" stroke-opacity="0.16" stroke-width="1.5"/>
-    <text x="284" y="414" fill="#9B6A3E" font-size="16" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">道号</text>
-    <text x="526" y="414" fill="#5A2812" font-size="18" text-anchor="end" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">张道友</text>
+    <rect x="238" y="398" width="338" height="52" rx="16" fill="#DDBB7A" fill-opacity="0.28" stroke="#A56A2A" stroke-opacity="0.24" stroke-width="1.5"/>
+    <text x="256" y="430" fill="#6F4826" font-size="16" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">道号</text>
+    <text x="558" y="430" fill="#3E2211" font-size="18" text-anchor="end" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">张道友</text>
   </g>
   
   <g>
-    <rect x="656" y="386" width="278" height="44" rx="14" fill="#FFF7EA" fill-opacity="0.42" stroke="#A56A2A" stroke-opacity="0.16" stroke-width="1.5"/>
-    <text x="674" y="414" fill="#8B5A31" font-size="16" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">生成时间</text>
-    <text x="916" y="414" fill="#6B3518" font-size="18" text-anchor="end" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">2026-04-09 11:39</text>
+    <rect x="624" y="398" width="338" height="52" rx="16" fill="#FFF7EA" fill-opacity="0.82" stroke="#A56A2A" stroke-opacity="0.24" stroke-width="1.5"/>
+    <text x="642" y="430" fill="#6F4826" font-size="16" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">生成时间</text>
+    <text x="944" y="430" fill="#3E2211" font-size="18" text-anchor="end" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">2026-04-09 12:08</text>
   </g>
 
   <g>
-    <circle cx="600" cy="552" r="134" fill="#6A2E13" fill-opacity="0.06" stroke="#7F3415" stroke-width="3"/>
-    <circle cx="600" cy="552" r="106" stroke="#8B3C19" stroke-opacity="0.28" stroke-width="2" stroke-dasharray="8 10"/>
-    <text x="600" y="540" fill="#532410" font-size="98" text-anchor="middle" font-family="STKaiti, KaiTi, serif">金丹</text>
-    <text x="600" y="590" fill="#7B471F" font-size="22" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="5">当前境界</text>
+    <circle cx="600" cy="584" r="126" fill="#6A2E13" fill-opacity="0.05" stroke="#7F3415" stroke-width="3"/>
+    <circle cx="600" cy="584" r="98" stroke="#8B3C19" stroke-opacity="0.28" stroke-width="2" stroke-dasharray="8 10"/>
+    <text x="600" y="572" fill="#532410" font-size="92" text-anchor="middle" font-family="STKaiti, KaiTi, serif">金丹</text>
+    <text x="600" y="620" fill="#6A3618" font-size="22" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="5">当前境界</text>
   </g>
 
   <g>
-    <rect x="262" y="712" width="676" height="158" rx="24" fill="#FFF6E6" fill-opacity="0.42" stroke="#A56A2A" stroke-opacity="0.18" stroke-width="2"/>
-    <text x="600" y="756" fill="#8A562D" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="3">观气判词</text>
-    <text x="600" y="806" fill="#5B2A12" font-size="26" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700"><tspan x="600" dy="0">此番观气，已入金丹之境，丹火初成。你如今长于同修</tspan><tspan x="600" dy="34">合拍，但收功松散仍是当前关隘，补齐此处后才好再望</tspan><tspan x="600" dy="34">上境。</tspan></text>
-  </g>
-
-  
-  <g>
-    <rect x="262" y="918" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
-    <text x="284" y="952" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">灵根</text>
-    <text x="284" y="990" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="284" dy="0">未显灵根</tspan></text>
-    <text x="288" y="1030" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="288" dy="0">资质未明</tspan></text>
-  </g>
-  
-  <g>
-    <rect x="634" y="918" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
-    <text x="656" y="952" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">灵脉</text>
-    <text x="656" y="990" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="656" dy="0">CODEX</tspan></text>
-    <text x="660" y="1030" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="660" dy="0">模型平台与主炉来路</tspan></text>
-  </g>
-  
-  <g>
-    <rect x="262" y="1080" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
-    <text x="284" y="1114" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">灵气</text>
-    <text x="284" y="1152" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="284" dy="0">2,892 token</tspan></text>
-    <text x="288" y="1192" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="288" dy="0">本次卷宗</tspan></text>
-  </g>
-  
-  <g>
-    <rect x="634" y="1080" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
-    <text x="656" y="1114" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">心法</text>
-    <text x="656" y="1152" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="656" dy="0">同修合拍 85/100</tspan></text>
-    <text x="660" y="1192" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="660" dy="0">当前最稳的一项协作功底</tspan></text>
-  </g>
-  
-  <g>
-    <rect x="262" y="1242" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
-    <text x="284" y="1276" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">功法</text>
-    <text x="284" y="1314" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="284" dy="0">skill / 模板 / 模块</tspan></text>
-    <text x="288" y="1354" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="288" dy="0">你现在真正会使的那门法</tspan></text>
-  </g>
-  
-  <g>
-    <rect x="634" y="1242" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
-    <text x="656" y="1276" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">分身</text>
-    <text x="656" y="1314" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="656" dy="0">役使 2 次分身</tspan></text>
-    <text x="660" y="1354" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="660" dy="0">可供役使的工具与 agent 痕迹</tspan></text>
+    <rect x="214" y="732" width="772" height="292" rx="30" fill="#FFF7EA" fill-opacity="0.78" stroke="#A56A2A" stroke-opacity="0.24" stroke-width="2"/>
+    <text x="600" y="800" fill="#8A562D" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">命主判词</text>
+    <text x="600" y="866" fill="#4C2412" font-size="28" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700"><tspan x="600" dy="0">此番观气，已至金丹之境，五脉均势 50/100。</tspan><tspan x="600" dy="38">同修合拍 85/100 最盛，收功松散 34/100 为关隘。</tspan><tspan x="600" dy="38">本卷 4 条对话，2 次分身，炼化 2,892 枚灵气。</tspan></text>
   </g>
 
   <g>
-    <rect x="262" y="1406" width="676" height="50" rx="16" fill="#6E3114" fill-opacity="0.08"/>
-    <text x="294" y="1438" fill="#6B3417" font-size="18" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">破境机缘：每一轮收功时，都要求附上验证命令或可观察结果。</text>
+    <rect x="214" y="1060" width="772" height="228" rx="30" fill="#FFF6E4" fill-opacity="0.82" stroke="#A56A2A" stroke-opacity="0.22" stroke-width="2"/>
+    <text x="600" y="1114" fill="#8A562D" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">破境指引</text>
+    <text x="600" y="1182" fill="#4F2812" font-size="28" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700"><tspan x="600" dy="0">每一轮收功时，都要求附上验证命令或可观察结</tspan><tspan x="600" dy="38">果。</tspan></text>
+    <text x="600" y="1244" fill="#81502A" font-size="18" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">守住一条主线，再启下一轮炼化</text>
   </g>
+
+  <line x1="320" y1="1382" x2="880" y2="1382" stroke="#A56A2A" stroke-opacity="0.18" stroke-width="2"/>
+  <text x="600" y="1434" fill="#7A4B28" font-size="18" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">画像 · 命主当前气象与破境方向</text>
 
 </svg>
