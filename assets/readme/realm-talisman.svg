@@ -1,72 +1,118 @@
 <svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="140" y1="80" x2="1060" y2="1520" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#16100A"/>
-      <stop offset="0.45" stop-color="#24180E"/>
-      <stop offset="1" stop-color="#120C08"/>
+    <linearGradient id="bg" x1="86" y1="48" x2="1124" y2="1556" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0E0A07"/>
+      <stop offset="0.46" stop-color="#1D140D"/>
+      <stop offset="1" stop-color="#090705"/>
     </linearGradient>
-    <linearGradient id="paper" x1="200" y1="150" x2="1010" y2="1450" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F6E6B4"/>
-      <stop offset="0.5" stop-color="#EACD8E"/>
-      <stop offset="1" stop-color="#D8B06A"/>
+    <linearGradient id="paper" x1="194" y1="124" x2="1018" y2="1486" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8EFD8"/>
+      <stop offset="0.45" stop-color="#E9D2A1"/>
+      <stop offset="1" stop-color="#D3A45A"/>
     </linearGradient>
-    <linearGradient id="ink" x1="340" y1="210" x2="880" y2="1310" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#582A12"/>
-      <stop offset="1" stop-color="#A23E18"/>
+    <linearGradient id="ink" x1="292" y1="210" x2="812" y2="1428" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6F3218"/>
+      <stop offset="1" stop-color="#3E1D0E"/>
     </linearGradient>
-    <filter id="shadow" x="110" y="90" width="980" height="1440" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <radialGradient id="mist" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(920 222) rotate(145) scale(314 224)">
+      <stop stop-color="#E9C777" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#E9C777" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="118" y="92" width="964" height="1436" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
       <feFlood flood-opacity="0" result="BackgroundImageFix"/>
       <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-      <feOffset dy="24"/>
-      <feGaussianBlur stdDeviation="28"/>
-      <feColorMatrix type="matrix" values="0 0 0 0 0.03 0 0 0 0 0.01 0 0 0 0 0 0 0 0 0.45 0"/>
+      <feOffset dy="26"/>
+      <feGaussianBlur stdDeviation="24"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.03 0 0 0 0 0.015 0 0 0 0 0.006 0 0 0 0.48 0"/>
       <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1"/>
       <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape"/>
     </filter>
   </defs>
+
   <rect width="1200" height="1600" rx="48" fill="url(#bg)"/>
-  <circle cx="970" cy="230" r="96" fill="#F6C45F" fill-opacity="0.18"/>
-  <circle cx="230" cy="1320" r="138" fill="#8C2D12" fill-opacity="0.16"/>
-  <g opacity="0.38" stroke="#F3D58A" stroke-width="2">
-    <path d="M132 188C228 150 330 150 434 188"/>
-    <path d="M766 1414C864 1450 964 1450 1068 1414"/>
-    <path d="M110 1364C194 1272 264 1204 394 1170"/>
-    <path d="M804 420C916 396 992 332 1074 242"/>
-  </g>
+  <ellipse cx="920" cy="222" rx="252" ry="178" fill="url(#mist)"/>
+
   <g filter="url(#shadow)">
-    <path d="M226 148C202 150 184 170 182 194L150 1444C148 1476 174 1504 206 1506L986 1466C1013 1465 1035 1445 1038 1418L1086 206C1089 174 1065 146 1034 144L226 148Z" fill="url(#paper)"/>
-    <path d="M220 172C198 174 182 190 180 212L154 1436C152 1463 174 1485 201 1484L986 1450C1008 1449 1026 1432 1028 1410L1070 214C1072 188 1052 166 1026 164L220 172Z" stroke="#F5E4B7" stroke-width="8"/>
+    <path d="M252 130H948C980 130 1006 156 1006 188V1412C1006 1446 980 1472 948 1472H252C220 1472 194 1446 194 1412V188C194 156 220 130 252 130Z" fill="url(#paper)"/>
+    <path d="M252 150H948C968 150 988 168 988 188V1410C988 1430 968 1450 948 1450H252C230 1450 212 1430 212 1410V188C212 168 230 150 252 150Z" stroke="#FBF3E2" stroke-width="8"/>
+    <rect x="236" y="174" width="728" height="1232" rx="28" stroke="#A56A2A" stroke-opacity="0.34" stroke-width="2" stroke-dasharray="10 10"/>
   </g>
-  <g opacity="0.14" stroke="#7A431B" stroke-width="3">
-    <path d="M306 292C468 336 734 328 918 274"/>
-    <path d="M282 650C494 690 718 684 930 636"/>
-    <path d="M266 1038C484 1070 720 1064 934 1018"/>
+
+  <text x="600" y="232" fill="url(#ink)" font-size="34" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="4">画像.skill</text>
+  <text x="600" y="308" fill="url(#ink)" font-size="102" text-anchor="middle" font-family="STKaiti, KaiTi, serif">修仙画像</text>
+  <text x="600" y="356" fill="#7A461F" font-size="23" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">开始把自己的做法封成 skill / 模板 / 模块</text>
+  
+  <g>
+    <rect x="266" y="386" width="278" height="44" rx="14" fill="#6D3318" fill-opacity="0.10" stroke="#A56A2A" stroke-opacity="0.16" stroke-width="1.5"/>
+    <text x="284" y="414" fill="#9B6A3E" font-size="16" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">道号</text>
+    <text x="526" y="414" fill="#5A2812" font-size="18" text-anchor="end" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">张道友</text>
   </g>
-  <text x="600" y="246" fill="#6D3517" font-size="46" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="10">画像.skill</text>
-  <text x="600" y="326" fill="#8D2F12" font-size="124" text-anchor="middle" font-family="STKaiti, KaiTi, serif">修仙画像</text>
-  <text x="600" y="390" fill="#7C421D" font-size="34" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">从运行卷宗里炼出你的 AI 协作境界</text>
-  <g fill="url(#ink)">
-    <text x="600" y="566" font-size="76" text-anchor="middle" font-family="STKaiti, KaiTi, serif">金丹</text>
-    <text x="600" y="626" font-size="28" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="6">当前境界</text>
+  
+  <g>
+    <rect x="656" y="386" width="278" height="44" rx="14" fill="#FFF7EA" fill-opacity="0.42" stroke="#A56A2A" stroke-opacity="0.16" stroke-width="1.5"/>
+    <text x="674" y="414" fill="#8B5A31" font-size="16" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">生成时间</text>
+    <text x="916" y="414" fill="#6B3518" font-size="18" text-anchor="end" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">2026-04-09 11:39</text>
   </g>
-  <g stroke="#8A3314" stroke-width="10" stroke-linecap="round">
-    <path d="M606 688L606 952"/>
-    <path d="M532 736C560 748 648 748 680 736"/>
-    <path d="M518 816C560 832 652 832 694 816"/>
-    <path d="M552 892C576 904 632 904 660 892"/>
-    <path d="M560 976C590 988 620 988 650 976"/>
-    <path d="M458 768L522 814"/>
-    <path d="M686 814L750 768"/>
-    <path d="M458 914L522 868"/>
-    <path d="M686 868L750 914"/>
+
+  <g>
+    <circle cx="600" cy="552" r="134" fill="#6A2E13" fill-opacity="0.06" stroke="#7F3415" stroke-width="3"/>
+    <circle cx="600" cy="552" r="106" stroke="#8B3C19" stroke-opacity="0.28" stroke-width="2" stroke-dasharray="8 10"/>
+    <text x="600" y="540" fill="#532410" font-size="98" text-anchor="middle" font-family="STKaiti, KaiTi, serif">金丹</text>
+    <text x="600" y="590" fill="#7B471F" font-size="22" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="5">当前境界</text>
   </g>
-  <g fill="#4B2713" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">
-    <text x="290" y="1098" font-size="28">修炼时长</text>
-    <text x="290" y="1142" font-size="56" font-weight="700">538,620 token</text>
-    <text x="290" y="1238" font-size="28">灵根</text>
-    <text x="290" y="1282" font-size="48" font-weight="700">工具流火灵根</text>
-    <text x="290" y="1368" font-size="28">资质</text>
-    <text x="290" y="1412" font-size="48" font-weight="700">中上，擅长推进与收束</text>
+
+  <g>
+    <rect x="262" y="712" width="676" height="158" rx="24" fill="#FFF6E6" fill-opacity="0.42" stroke="#A56A2A" stroke-opacity="0.18" stroke-width="2"/>
+    <text x="600" y="756" fill="#8A562D" font-size="20" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" letter-spacing="3">观气判词</text>
+    <text x="600" y="806" fill="#5B2A12" font-size="26" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700"><tspan x="600" dy="0">此番观气，已入金丹之境，丹火初成。你如今长于同修</tspan><tspan x="600" dy="34">合拍，但收功松散仍是当前关隘，补齐此处后才好再望</tspan><tspan x="600" dy="34">上境。</tspan></text>
   </g>
-  <text x="600" y="1540" fill="#F3D898" font-size="26" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">境界写在符箓上，天然适合截图传播</text>
+
+  
+  <g>
+    <rect x="262" y="918" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
+    <text x="284" y="952" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">灵根</text>
+    <text x="284" y="990" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="284" dy="0">未显灵根</tspan></text>
+    <text x="288" y="1030" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="288" dy="0">资质未明</tspan></text>
+  </g>
+  
+  <g>
+    <rect x="634" y="918" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
+    <text x="656" y="952" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">灵脉</text>
+    <text x="656" y="990" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="656" dy="0">CODEX</tspan></text>
+    <text x="660" y="1030" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="660" dy="0">模型平台与主炉来路</tspan></text>
+  </g>
+  
+  <g>
+    <rect x="262" y="1080" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
+    <text x="284" y="1114" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">灵气</text>
+    <text x="284" y="1152" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="284" dy="0">2,892 token</tspan></text>
+    <text x="288" y="1192" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="288" dy="0">本次卷宗</tspan></text>
+  </g>
+  
+  <g>
+    <rect x="634" y="1080" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
+    <text x="656" y="1114" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">心法</text>
+    <text x="656" y="1152" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="656" dy="0">同修合拍 85/100</tspan></text>
+    <text x="660" y="1192" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="660" dy="0">当前最稳的一项协作功底</tspan></text>
+  </g>
+  
+  <g>
+    <rect x="262" y="1242" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
+    <text x="284" y="1276" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">功法</text>
+    <text x="284" y="1314" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="284" dy="0">skill / 模板 / 模块</tspan></text>
+    <text x="288" y="1354" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="288" dy="0">你现在真正会使的那门法</tspan></text>
+  </g>
+  
+  <g>
+    <rect x="634" y="1242" width="304" height="134" rx="22" fill="#FFF9ED" fill-opacity="0.24" stroke="#A46A2B" stroke-opacity="0.18" stroke-width="2"/>
+    <text x="656" y="1276" fill="#8C5B31" font-size="19" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">分身</text>
+    <text x="656" y="1314" fill="#4F2812" font-size="28" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="700"><tspan x="656" dy="0">役使 2 次分身</tspan></text>
+    <text x="660" y="1354" fill="#8C5A31" font-size="16" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif" font-weight="400"><tspan x="660" dy="0">可供役使的工具与 agent 痕迹</tspan></text>
+  </g>
+
+  <g>
+    <rect x="262" y="1406" width="676" height="50" rx="16" fill="#6E3114" fill-opacity="0.08"/>
+    <text x="294" y="1438" fill="#6B3417" font-size="18" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, serif">破境机缘：每一轮收功时，都要求附上验证命令或可观察结果。</text>
+  </g>
+
 </svg>

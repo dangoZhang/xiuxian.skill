@@ -36,16 +36,46 @@ REALM_DESCRIPTIONS = {
     "飞升": "工作方式已经被 AI 重写，不再只是“会用工具”",
 }
 
+REALM_AURAS = {
+    "凡人": "气海未开",
+    "感气": "灵机初动",
+    "炼气": "气息渐稳",
+    "筑基": "根骨已立",
+    "金丹": "丹火初成",
+    "元婴": "元神将显",
+    "化神": "神念外放",
+    "炼虚": "虚实相济",
+    "合体": "人机同脉",
+    "大乘": "道法成势",
+    "渡劫": "雷劫临门",
+    "飞升": "道成可传",
+}
+
 AI_LEVELS = [
     (0, "L1"),
-    (36, "L2"),
-    (48, "L3"),
-    (60, "L4"),
-    (72, "L5"),
-    (82, "L6"),
-    (90, "L7"),
-    (96, "L8"),
+    (16, "L2"),
+    (28, "L3"),
+    (40, "L4"),
+    (52, "L5"),
+    (64, "L6"),
+    (74, "L7"),
+    (82, "L8"),
+    (90, "L9"),
+    (96, "L10"),
 ]
+
+AI_LEVEL_DESCRIPTIONS = {
+    "L1": "仍以单轮问答为主",
+    "L2": "开始知道提问方式会改变结果",
+    "L3": "能稳定完成简单任务",
+    "L4": "已经能重复跑通常见 workflow",
+    "L5": "开始把经验封成模板或 skill",
+    "L6": "能先替你推进一段具体工作",
+    "L7": "能协同多个 agent 与工具完成任务",
+    "L8": "开始承担能力层与系统层工作",
+    "L9": "能进入真实业务回路并持续回流",
+    "L10": "方法已可复制到团队与客户场景",
+}
 
 LEVEL_TABLES = {
     "user": REALM_LEVELS,
@@ -154,6 +184,8 @@ def aggregate_analyses(analyses: list[Analysis], min_messages: int = 8) -> dict[
         "sessions_used": len(pool),
         "sessions_dropped": dropped,
         "min_messages": min_messages,
+        "total_messages": total_messages,
+        "total_tool_calls": total_tool_calls,
         "models": models,
         "providers": providers,
         "token_usage": {
@@ -295,10 +327,10 @@ def _build_aggregate_certificate(
         subtitle = REALM_DESCRIPTIONS[level]
         summary = f"这是你在多场真实协作里的稳定高位层级。当前已到 {level}，继续补齐短板后再看下一次破境。"
     else:
-        persona_title = f"{level} AI 协作者"
+        persona_title = f"{level} 协作等级"
         title = "AI 协作能力证书"
-        subtitle = "按高位发挥定级，剔除低样本偏置"
-        summary = "这是 AI 在长期协作样本里的稳定高位能力，不是偶发峰值。"
+        subtitle = AI_LEVEL_DESCRIPTIONS[level]
+        summary = "这是 AI 在长期协作样本里的稳定等级，不取单次峰值。"
     return {
         "track": track,
         "title": title,
@@ -455,16 +487,20 @@ def _build_user_certificate(score: int, metrics: list[MetricScore], transcript: 
     level = _pick_level(score, REALM_LEVELS)
     top = sorted(metrics, key=lambda item: item.score, reverse=True)
     low = sorted(metrics, key=lambda item: item.score)
+    aura = REALM_AURAS[level]
+    top_trait = _user_metric_phrase(top[0].name, style="tag")
+    second_trait = _user_metric_phrase(top[1].name, style="tag") if len(top) > 1 else top_trait
+    weak_trait = _user_metric_phrase(low[0].name, style="weak")
     persona = Persona(
-        title=f"{level}协作修士",
+        title=f"{level}修士",
         subtitle=REALM_DESCRIPTIONS[level],
-        tags=_metric_tags(top[:3]),
-        summary=f"当前稳定层级是 {level}。强项已开始成形，但是否继续破境，取决于你能不能把短板也拉到同一档。",
+        tags=[aura, top_trait, second_trait],
+        summary=f"此番观气，已入{level}之境，{aura}。你如今长于{top_trait}，但{weak_trait}仍是当前关隘，补齐此处后才好再望上境。",
     )
     evidence = [
-        f"目标最强项：{top[0].name} {top[0].score}/100，{top[0].rationale}",
-        f"当前短板：{low[0].name} {low[0].score}/100，{low[0].rationale}",
-        f"本次样本来自 {transcript.source}，共 {len(transcript.messages)} 条有效消息。",
+        f"主修道法：{_user_metric_phrase(top[0].name, style='title')} {top[0].score}/100，{top[0].rationale}",
+        f"待补关隘：{_user_metric_phrase(low[0].name, style='weak_title')} {low[0].score}/100，{low[0].rationale}",
+        f"此番观测来自 {transcript.source}，共 {len(transcript.messages)} 条有效消息。",
     ]
     growth_plan = _growth_plan(low[:2], user_track=True)
     return Certificate(
@@ -483,14 +519,14 @@ def _build_assistant_certificate(score: int, metrics: list[MetricScore], transcr
     top = sorted(metrics, key=lambda item: item.score, reverse=True)
     low = sorted(metrics, key=lambda item: item.score)
     persona = Persona(
-        title=f"{level} AI 协作者",
-        subtitle="执行、闭环、承接、补救四项综合评级",
-        tags=_metric_tags(top[:3]),
-        summary="这类 AI 适合承担拆解、实现、验证与回收问题的工作，但仍需要你提供更高质量的上下文燃料。",
+        title=f"{level} 协作等级",
+        subtitle=AI_LEVEL_DESCRIPTIONS[level],
+        tags=_metric_tags(top[:3], track="assistant"),
+        summary="等级按真实会话稳定高位定级，用来判断当前可承担的协作强度。",
     )
     evidence = [
-        f"AI 强项：{top[0].name} {top[0].score}/100，{top[0].rationale}",
-        f"AI 可补位项：{low[0].name} {low[0].score}/100，{low[0].rationale}",
+        f"当前最强项：{top[0].name} {top[0].score}/100，{top[0].rationale}",
+        f"当前短板：{low[0].name} {low[0].score}/100，{low[0].rationale}",
         f"工具调用累计 {transcript.tool_calls} 次。",
     ]
     growth_plan = _growth_plan(low[:2], user_track=False)
@@ -513,8 +549,8 @@ def _pick_level(score: int, table: list[tuple[int, str]]) -> str:
     return current
 
 
-def _metric_tags(metrics: list[MetricScore]) -> list[str]:
-    mapping = {
+def _metric_tags(metrics: list[MetricScore], track: str = "assistant") -> list[str]:
+    common_mapping = {
         "目标清晰度": "指令清晰",
         "上下文供给": "上下文稳定",
         "迭代修正力": "回合耐久",
@@ -526,22 +562,115 @@ def _metric_tags(metrics: list[MetricScore]) -> list[str]:
         "上下文承接": "承接上下文",
         "补救适配": "会拐弯",
     }
+    xianxia_mapping = {
+        "目标清晰度": "心法清明",
+        "上下文供给": "根基稳固",
+        "迭代修正力": "吐纳绵长",
+        "验收意识": "收功自验",
+        "协作节奏": "同修合拍",
+        "执行落地": "法诀沉稳",
+        "工具调度": "御器有度",
+        "验证闭环": "收束成环",
+        "上下文承接": "承气不断",
+        "补救适配": "转圜有余",
+    }
+    mapping = xianxia_mapping if track == "user" else common_mapping
     return [mapping.get(item.name, item.name) for item in metrics]
+
+
+def _xianxia_metric_name(name: str) -> str:
+    mapping = {
+        "目标清晰度": "心法",
+        "上下文供给": "根基",
+        "迭代修正力": "吐纳",
+        "验收意识": "收功",
+        "协作节奏": "同修",
+    }
+    return mapping.get(name, name)
+
+
+def _user_metric_phrase(name: str, style: str = "tag") -> str:
+    phrases = {
+        "目标清晰度": {
+            "tag": "心法清明",
+            "title": "心法清明",
+            "weak": "心法未定",
+            "weak_title": "心法未定",
+        },
+        "上下文供给": {
+            "tag": "根基稳固",
+            "title": "根基稳固",
+            "weak": "根基浮动",
+            "weak_title": "根基浮动",
+        },
+        "迭代修正力": {
+            "tag": "吐纳绵长",
+            "title": "吐纳绵长",
+            "weak": "吐纳不匀",
+            "weak_title": "吐纳不匀",
+        },
+        "验收意识": {
+            "tag": "收功自验",
+            "title": "收功自验",
+            "weak": "收功松散",
+            "weak_title": "收功松散",
+        },
+        "协作节奏": {
+            "tag": "同修合拍",
+            "title": "同修合拍",
+            "weak": "同修失序",
+            "weak_title": "同修失序",
+        },
+        "执行落地": {
+            "tag": "法诀沉稳",
+            "title": "法诀沉稳",
+            "weak": "法诀虚浮",
+            "weak_title": "法诀虚浮",
+        },
+        "工具调度": {
+            "tag": "御器有度",
+            "title": "御器有度",
+            "weak": "御器未熟",
+            "weak_title": "御器未熟",
+        },
+        "验证闭环": {
+            "tag": "收束成环",
+            "title": "收束成环",
+            "weak": "收束松散",
+            "weak_title": "收束松散",
+        },
+        "上下文承接": {
+            "tag": "承气不断",
+            "title": "承气不断",
+            "weak": "承气断续",
+            "weak_title": "承气断续",
+        },
+        "补救适配": {
+            "tag": "转圜有余",
+            "title": "转圜有余",
+            "weak": "转圜迟缓",
+            "weak_title": "转圜迟缓",
+        },
+    }
+    mapping = phrases.get(name)
+    if not mapping:
+        return name
+    return mapping.get(style, mapping["tag"])
 
 
 def _growth_plan(metrics: list[MetricScore], user_track: bool) -> list[str]:
     plans: list[str] = []
     for item in metrics:
         if item.name == "目标清晰度":
-            plans.append("下一周期把请求写成“目标 + 约束 + 输出物 + 验收”四段式。")
+            plans.append("下次闭关前，先把诉求写成“目标 + 约束 + 输出物 + 验收”四段式。")
         elif item.name == "上下文供给":
-            plans.append("把关键文件、路径、模型、运行方式一次给全，减少 AI 补问成本。")
+            plans.append("把关键文件、路径、模型、运行方式一并备齐，再开炉炼化。")
         elif item.name == "迭代修正力":
-            plans.append("每轮只改一个核心变量，并明确保留什么、不保留什么。")
+            plans.append("每轮只动一个核心变量，守住其余条件，避免气机紊乱。")
         elif item.name == "验收意识":
-            plans.append("要求 AI 在每个阶段附上验证命令或可观察结果。")
+            plans.append("每一轮收功时，都要求附上验证命令或可观察结果。")
         elif item.name == "协作节奏":
-            plans.append("把大目标拆成 3 个小关卡，每过一关就收一次结果。")
+            plans.append("把大目标拆成三重关，每破一关便收一次结果。")
         elif item.name == "执行落地":
             plans.append("让 AI 先报第一步，再做实现，避免空泛总结。")
         elif item.name == "工具调度":
@@ -555,7 +684,7 @@ def _growth_plan(metrics: list[MetricScore], user_track: bool) -> list[str]:
     if not plans:
         plans.append("继续累计高质量回合，下个周期冲击更高证书。")
     if user_track:
-        plans.append("完成一轮新项目协作后，用最新日志再次 recertify。")
+        plans.append("待下一轮炼化结束，再持最新卷宗前来验境。")
     else:
         plans.append("让 AI 在下一轮任务里强制执行“实现 -> 验证 -> 回报”节奏。")
     return plans[:3]

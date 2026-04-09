@@ -6,9 +6,14 @@ from datetime import datetime
 from pathlib import Path
 
 from .analyzer import aggregate_analyses, analyze_transcript, compare_analyses
+from .cards import write_cards
 from .memory import build_memory_summary, build_snapshot, load_previous_snapshot
+from .themes import get_ai_level_theme
+from .xianxia import derive_xianxia_profile
 from .parsers import (
+    default_display_name,
     filter_candidate_files,
+    infer_display_name,
     latest_transcript,
     latest_opencode_session_ref,
     list_opencode_session_refs,
@@ -35,6 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--path", help="Transcript path. If omitted, use the latest file for --source.")
     analyze.add_argument("--source", choices=["auto", "codex", "claude", "cc", "opencode", "openclaw", "oc", "cursor", "vscode", "code"], default="auto")
     analyze.add_argument("--certificate", choices=["user", "assistant", "both"], default="both")
+    analyze.add_argument("--username", help="Display name for the report and cards. If omitted, try to infer from transcript content.")
     analyze.add_argument("--all", action="store_true", help="Aggregate all detected sessions for the source.")
     analyze.add_argument("--since", help="Only include sessions on/after this date or datetime. Example: 2026-04-01")
     analyze.add_argument("--until", help="Only include sessions on/before this date or datetime. Example: 2026-04-09")
@@ -44,12 +50,14 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--no-memory", action="store_true", help="Do not read or write local evaluation memory.")
     analyze.add_argument("--output", help="Write markdown report to a file.")
     analyze.add_argument("--json-output", help="Write structured JSON summary to a file.")
+    analyze.add_argument("--card-dir", help="Write shareable SVG cards to this directory.")
 
     compare = subparsers.add_parser("compare", help="Compare two transcripts and judge whether the user or AI broke through.")
     compare.add_argument("--before", required=True, help="Previous-cycle transcript path.")
     compare.add_argument("--after", help="Current-cycle transcript path. If omitted, use latest file for --source.")
     compare.add_argument("--source", choices=["auto", "codex", "claude", "cc", "opencode", "openclaw", "oc", "cursor", "vscode", "code"], default="auto")
     compare.add_argument("--certificate", choices=["user", "assistant", "both"], default="both")
+    compare.add_argument("--username", help="Display name for the comparison report.")
     compare.add_argument("--output", help="Write markdown comparison report to a file.")
     compare.add_argument("--json-output", help="Write structured comparison JSON to a file.")
 
@@ -68,9 +76,11 @@ def main() -> None:
         _handle_compare(args)
         return
 
+    generated_at = _generated_at()
     source = normalize_source(args.source)
     if args.path:
         transcript = load_transcript(args.path, source=source)
+        _apply_display_name(transcript, args.username, track=args.certificate)
         analysis = analyze_transcript(transcript)
         payload = _to_json(analysis)
         scope_kind = "path"
@@ -84,7 +94,10 @@ def main() -> None:
         if not refs:
             raise SystemExit("No sessions matched the requested source/time window.")
         analyses = [analyze_transcript(load_transcript(ref, source=source)) for ref in refs]
+        for analysis in analyses:
+            _apply_display_name(analysis.transcript, args.username, track=args.certificate)
         aggregate = aggregate_analyses(analyses, min_messages=args.min_messages)
+        aggregate["display_name"] = _resolve_display_name_from_analyses(analyses, override=args.username, track=args.certificate)
         aggregate["time_window"] = {
             "since": args.since,
             "until": args.until,
@@ -98,11 +111,14 @@ def main() -> None:
         if source == "auto":
             source = "codex"
         transcript = load_transcript(_latest_ref(source), source=source)
+        _apply_display_name(transcript, args.username, track=args.certificate)
         analysis = analyze_transcript(transcript)
         payload = _to_json(analysis)
         scope_kind = "latest"
         scope_label = f"{source}:最近一次"
 
+    payload["generated_at"] = generated_at
+    payload["xianxia_profile"] = derive_xianxia_profile(payload)
     snapshot_source = _payload_source(payload, fallback=source)
     scope_label = scope_label.replace(f"{source}:", f"{snapshot_source}:")
 
@@ -121,9 +137,19 @@ def main() -> None:
         payload["memory"] = memory_summary
 
     if args.path or (not args.all and not args.since and not args.until and not args.limit):
-        markdown = render_markdown(analysis, certificate_choice=args.certificate, memory_summary=memory_summary)
+        markdown = render_markdown(
+            analysis,
+            certificate_choice=args.certificate,
+            memory_summary=memory_summary,
+            generated_at=generated_at,
+        )
     else:
-        markdown = render_aggregate_markdown(aggregate, certificate_choice=args.certificate, memory_summary=memory_summary)
+        markdown = render_aggregate_markdown(
+            aggregate,
+            certificate_choice=args.certificate,
+            memory_summary=memory_summary,
+            generated_at=generated_at,
+        )
 
     if args.output:
         output_path = Path(args.output).expanduser().resolve()
@@ -132,6 +158,9 @@ def main() -> None:
     else:
         print(markdown)
 
+    if args.card_dir:
+        payload["cards"] = write_cards(payload, args.card_dir, certificate_choice=args.certificate)
+
     if args.json_output:
         output_path = Path(args.json_output).expanduser().resolve()
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -139,17 +168,26 @@ def main() -> None:
 
 
 def _handle_compare(args) -> None:
+    generated_at = _generated_at()
     source = normalize_source(args.source)
-    before = analyze_transcript(load_transcript(args.before, source=source))
+    before_transcript = load_transcript(args.before, source=source)
+    _apply_display_name(before_transcript, args.username, track=args.certificate)
+    before = analyze_transcript(before_transcript)
     if args.after:
-        after = analyze_transcript(load_transcript(args.after, source=source))
+        after_transcript = load_transcript(args.after, source=source)
+        _apply_display_name(after_transcript, args.username, track=args.certificate)
+        after = analyze_transcript(after_transcript)
     else:
         if source == "auto":
             source = "codex"
-        after = analyze_transcript(load_transcript(_latest_ref(source), source=source))
+        after_transcript = load_transcript(_latest_ref(source), source=source)
+        _apply_display_name(after_transcript, args.username, track=args.certificate)
+        after = analyze_transcript(after_transcript)
 
     comparison = compare_analyses(before, after)
-    markdown = render_comparison_markdown(comparison, certificate_choice=args.certificate)
+    comparison["display_name"] = after.transcript.display_name or before.transcript.display_name
+    comparison["generated_at"] = generated_at
+    markdown = render_comparison_markdown(comparison, certificate_choice=args.certificate, generated_at=generated_at)
     if args.output:
         output_path = Path(args.output).expanduser().resolve()
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -187,6 +225,7 @@ def _to_json(analysis):
             "tool_calls": analysis.transcript.tool_calls,
             "models": analysis.transcript.models,
             "providers": analysis.transcript.providers,
+            "display_name": analysis.transcript.display_name,
             "token_usage": {
                 "input_tokens": analysis.transcript.token_usage.input_tokens,
                 "cached_input_tokens": analysis.transcript.token_usage.cached_input_tokens,
@@ -203,7 +242,7 @@ def _to_json(analysis):
 
 
 def _certificate_to_json(certificate):
-    return {
+    payload = {
         "track": certificate.track,
         "title": certificate.title,
         "level": certificate.level,
@@ -217,6 +256,9 @@ def _certificate_to_json(certificate):
         "evidence": certificate.evidence,
         "growth_plan": certificate.growth_plan,
     }
+    if certificate.track == "assistant":
+        payload["theme"] = get_ai_level_theme(certificate.level)
+    return payload
 
 
 def _latest_ref(source: str):
@@ -263,6 +305,23 @@ def _payload_source(payload: dict[str, object], fallback: str) -> str:
         if isinstance(source, str) and source:
             return source
     return fallback
+
+
+def _apply_display_name(transcript, override: str | None, track: str) -> None:
+    transcript.display_name = override or infer_display_name(transcript) or default_display_name("user" if track != "assistant" else "assistant")
+
+
+def _resolve_display_name_from_analyses(analyses, override: str | None, track: str) -> str:
+    if override:
+        return override
+    for analysis in analyses:
+        if analysis.transcript.display_name:
+            return str(analysis.transcript.display_name)
+    return default_display_name("user" if track != "assistant" else "assistant")
+
+
+def _generated_at() -> str:
+    return datetime.now().astimezone().strftime("%Y-%m-%d %H:%M")
 
 
 if __name__ == "__main__":

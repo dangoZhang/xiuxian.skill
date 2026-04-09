@@ -31,6 +31,7 @@ class Transcript:
     models: list[str] = field(default_factory=list)
     providers: list[str] = field(default_factory=list)
     token_usage: TokenUsage = field(default_factory=TokenUsage)
+    display_name: str | None = None
 
 
 @dataclass(slots=True)

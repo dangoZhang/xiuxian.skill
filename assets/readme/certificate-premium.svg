@@ -1,62 +1,70 @@
 <svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="90" y1="50" x2="1100" y2="1550" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#09131F"/>
-      <stop offset="0.5" stop-color="#0F2235"/>
-      <stop offset="1" stop-color="#0B1724"/>
+    <linearGradient id="bg" x1="96" y1="54" x2="1106" y2="1546" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#141808"/>
+      <stop offset="0.52" stop-color="#2C3410"/>
+      <stop offset="1" stop-color="#091523"/>
     </linearGradient>
-    <linearGradient id="panel" x1="180" y1="150" x2="1010" y2="1470" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F9FBFF"/>
-      <stop offset="1" stop-color="#E6EDF7"/>
+    <radialGradient id="halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(924 232) rotate(142) scale(292 208)">
+      <stop stop-color="#A8CF54" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#A8CF54" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="card" x1="176" y1="124" x2="1022" y2="1486" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBFCF4"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
     </linearGradient>
-    <linearGradient id="line" x1="248" y1="220" x2="952" y2="1422" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#C49A45"/>
-      <stop offset="1" stop-color="#8E6A2F"/>
+    <linearGradient id="rim" x1="238" y1="184" x2="952" y2="1416" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C1E56A"/>
+      <stop offset="1" stop-color="#6C8D21"/>
     </linearGradient>
-    <filter id="cardShadow" x="120" y="92" width="960" height="1434" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <filter id="shadow" x="118" y="92" width="964" height="1436" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
       <feFlood flood-opacity="0" result="BackgroundImageFix"/>
       <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-      <feOffset dy="22"/>
+      <feOffset dy="24"/>
       <feGaussianBlur stdDeviation="24"/>
       <feColorMatrix type="matrix" values="0 0 0 0 0.02 0 0 0 0 0.05 0 0 0 0 0.08 0 0 0 0.28 0"/>
       <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1"/>
       <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape"/>
     </filter>
   </defs>
+
   <rect width="1200" height="1600" rx="48" fill="url(#bg)"/>
-  <circle cx="968" cy="248" r="168" fill="#C49A45" fill-opacity="0.14"/>
-  <circle cx="234" cy="1324" r="132" fill="#5FA8D3" fill-opacity="0.14"/>
-  <g opacity="0.28" stroke="#80C6F2">
-    <path d="M128 1378C240 1268 366 1208 520 1200"/>
-    <path d="M724 316C834 300 936 236 1050 128"/>
+  <ellipse cx="924" cy="232" rx="246" ry="182" fill="url(#halo)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="176" y="126" width="848" height="1360" rx="34" fill="url(#card)"/>
+    <rect x="196" y="146" width="808" height="1320" rx="26" stroke="url(#rim)" stroke-width="6"/>
+    <rect x="228" y="178" width="744" height="1256" rx="18" stroke="#C1E56A" stroke-opacity="0.24" stroke-width="2" stroke-dasharray="8 10"/>
   </g>
-  <g filter="url(#cardShadow)">
-    <rect x="176" y="126" width="848" height="1360" rx="34" fill="url(#panel)"/>
-    <rect x="194" y="144" width="812" height="1324" rx="24" stroke="url(#line)" stroke-width="6"/>
-    <rect x="228" y="178" width="744" height="1256" rx="16" stroke="#D7C08D" stroke-width="2" stroke-dasharray="8 10"/>
-  </g>
-  <text x="600" y="252" fill="#7D6336" font-size="38" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" letter-spacing="8">PORTRAIT.SKILL</text>
-  <text x="600" y="336" fill="#10253A" font-size="88" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700">AI 协作能力证书</text>
-  <text x="600" y="396" fill="#4D6276" font-size="28" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">基于真实会话、稳定高位发挥与多轮协作证据</text>
-  <rect x="342" y="470" width="516" height="194" rx="26" fill="#0F2235"/>
-  <text x="600" y="560" fill="#D9B467" font-size="132" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-weight="800">L6</text>
-  <text x="600" y="618" fill="#E8EEF7" font-size="30" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" letter-spacing="6">CURRENT LEVEL</text>
-  <g font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
-    <text x="290" y="758" fill="#73879C" font-size="26">能力类型</text>
-    <text x="290" y="806" fill="#132A42" font-size="48" font-weight="700">执行闭环型</text>
-    <text x="290" y="894" fill="#73879C" font-size="26">消耗 token</text>
-    <text x="290" y="942" fill="#132A42" font-size="42" font-weight="700">输入 529,010 / 输出 9,610</text>
-    <text x="290" y="1030" fill="#73879C" font-size="26">能力标签</text>
-    <text x="290" y="1078" fill="#132A42" font-size="40" font-weight="700">上下文承接 · 工具调用 · 结果校验</text>
-    <text x="290" y="1166" fill="#73879C" font-size="26">结论</text>
-    <text x="290" y="1214" fill="#132A42" font-size="36" font-weight="600">已具备稳定多轮协作能力</text>
-    <text x="290" y="1260" fill="#33465A" font-size="30">进入复杂任务时还需要更强的拆解与验收定义</text>
-  </g>
+
+  <text x="600" y="234" fill="#9AA56D" font-size="32" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" letter-spacing="3">画像.skill</text>
+  <text x="600" y="314" fill="#10263A" font-size="74" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700">AI 协作能力证书</text>
+  <text x="600" y="362" fill="#5E7287" font-size="23" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">真实会话稳定定级</text>
+  
   <g>
-    <circle cx="892" cy="1180" r="86" fill="#132A42"/>
-    <circle cx="892" cy="1180" r="72" stroke="#D7B26A" stroke-width="4"/>
-    <text x="892" y="1168" fill="#D7B26A" font-size="34" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">CERT</text>
-    <text x="892" y="1208" fill="#E9F0F8" font-size="22" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">VERIFIED</text>
+    <rect x="258" y="388" width="312" height="46" rx="14" fill="#EAF1FF" fill-opacity="0.88" stroke="#315FBC" stroke-opacity="0.18" stroke-width="1.5"/>
+    <text x="276" y="417" fill="#72889C" font-size="16" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">持有人</text>
+    <text x="552" y="417" fill="#18314E" font-size="18" text-anchor="end" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">张道友</text>
   </g>
-  <text x="600" y="1540" fill="#D8E5F3" font-size="26" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">证书图更适合社交主页、简历页、项目封面传播</text>
+  
+  <g>
+    <rect x="630" y="388" width="312" height="46" rx="14" fill="#EAF1FF" fill-opacity="0.88" stroke="#315FBC" stroke-opacity="0.18" stroke-width="1.5"/>
+    <text x="648" y="417" fill="#72889C" font-size="16" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">生成时间</text>
+    <text x="924" y="417" fill="#425B73" font-size="18" text-anchor="end" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">2026-04-09 11:39</text>
+  </g>
+
+  <g>
+    <rect x="258" y="462" width="684" height="664" rx="42" fill="#303B15"/>
+    <rect x="286" y="490" width="628" height="608" rx="32" stroke="#C1E56A" stroke-opacity="0.32" stroke-width="2"/>
+    <text x="600" y="680" fill="#C1E56A" font-size="236" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-weight="800">L4</text>
+    <text x="600" y="748" fill="#ECF2F8" font-size="26" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" letter-spacing="6">CURRENT LEVEL</text>
+    <line x1="360" y1="822" x2="840" y2="822" stroke="#C1E56A" stroke-opacity="0.16" stroke-width="2"/>
+    <text x="600" y="884" fill="#A6B7C8" font-size="22" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">能够</text>
+    <text x="600" y="944" fill="#F5F8FB" font-size="38" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="700"><tspan x="600" dy="0">重复跑通常见 workflow</tspan></text>
+    <rect x="332" y="1010" width="536" height="76" rx="20" fill="#FFFFFF" fill-opacity="0.06"/>
+    <text x="600" y="1058" fill="#C3D0DB" font-size="24" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">本次卷宗 消耗 2,892 token</text>
+  </g>
+
+  <line x1="318" y1="1248" x2="882" y2="1248" stroke="#D4DDE6" stroke-width="2"/>
+  <text x="600" y="1306" fill="#72889C" font-size="20" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif">画像.skill · Certified Collaboration Level</text>
 </svg>

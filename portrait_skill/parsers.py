@@ -64,6 +64,11 @@ SOURCE_EXTENSIONS = {
 
 OPENCODE_SESSION_PREFIX = "opencode://"
 
+DISPLAY_NAME_PATTERNS = [
+    re.compile(r"(?:我是|我叫|叫我|称呼我为)([A-Za-z0-9_\-\u4e00-\u9fff]{2,24})"),
+    re.compile(r"(?:my name is|i am|i'm|call me)\s+([A-Za-z0-9_\-]{2,24})", re.IGNORECASE),
+]
+
 
 def discover_candidate_files(source: str) -> list[Path]:
     source = normalize_source(source)
@@ -99,6 +104,25 @@ def load_transcript(path: str | Path, source: str = "auto") -> Transcript:
     if detected_source in {"claude", "opencode", "openclaw", "cursor", "vscode"}:
         return parse_generic(file_path, detected_source)
     return parse_generic(file_path, "generic")
+
+
+def infer_display_name(transcript: Transcript) -> str | None:
+    if transcript.display_name:
+        return transcript.display_name
+    for message in transcript.messages[:12]:
+        if message.role != "user":
+            continue
+        for pattern in DISPLAY_NAME_PATTERNS:
+            match = pattern.search(message.text)
+            if match:
+                candidate = _clean_display_name(match.group(1))
+                if candidate:
+                    return candidate
+    return None
+
+
+def default_display_name(certificate_track: str = "user") -> str:
+    return "道友" if certificate_track == "user" else "用户"
 
 
 def detect_source(path: Path, source: str) -> str:
@@ -187,6 +211,7 @@ def parse_codex(path: Path) -> Transcript:
         models=sorted(set(models)),
         providers=sorted(set(providers)),
         token_usage=token_usage,
+        display_name=_infer_display_name_from_messages(messages),
     )
 
 
@@ -212,6 +237,7 @@ def parse_generic(path: Path, source: str) -> Transcript:
                 models=sorted(set(model_hits)),
                 providers=sorted(set(provider_hits)),
                 token_usage=_collect_token_usage(items),
+                display_name=_infer_display_name_from_messages(turn_messages),
             )
 
     for obj in _walk_objects(items):
@@ -244,6 +270,7 @@ def parse_generic(path: Path, source: str) -> Transcript:
         models=sorted(set(models)),
         providers=sorted(set(providers)),
         token_usage=token_usage,
+        display_name=_infer_display_name_from_messages(messages),
     )
 
 
@@ -325,6 +352,7 @@ def parse_opencode_session(session_id: str, db_path: Path | None = None) -> Tran
         models=sorted(set(models)),
         providers=sorted(set(providers)),
         token_usage=token_usage,
+        display_name=_infer_display_name_from_messages(messages),
     )
 
 
@@ -856,3 +884,18 @@ def _ms_to_iso(value: object) -> str | None:
     if not milliseconds:
         return None
     return datetime.fromtimestamp(milliseconds / 1000).isoformat()
+
+
+def _infer_display_name_from_messages(messages: list[Message]) -> str | None:
+    transcript = Transcript(source="inference", path=Path("."), messages=messages)
+    return infer_display_name(transcript)
+
+
+def _clean_display_name(value: str) -> str | None:
+    candidate = value.strip(" \t\r\n，。,:：\"'`()[]{}<>")
+    if len(candidate) < 2 or len(candidate) > 24:
+        return None
+    blacklist = {"ai", "agent", "codex", "claude", "opencode", "openclaw", "cursor", "vscode"}
+    if candidate.lower() in blacklist:
+        return None
+    return candidate
