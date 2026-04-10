@@ -12,6 +12,7 @@ from .themes import get_ai_level_theme
 BASE_FONT_SIZE = 30
 BIG_FONT_SIZE = BASE_FONT_SIZE * 3
 BASE_LINE_HEIGHT = 42
+BODY_WRAP_UNITS = 28.0
 
 
 def write_cards(payload: dict[str, object], output_dir: str | Path, certificate_choice: str = "both") -> dict[str, str]:
@@ -32,11 +33,11 @@ def render_xiulian_card(payload: dict[str, object]) -> str:
     realm = str(insights.get("realm") or "凡人")
     rank = str(insights.get("rank") or "L1")
     ability_text = str(insights.get("card_ability_text") or insights.get("ability_text") or "仍在引气试手。")
-    ability_lines = _wrap_block([ability_text], 34.0, limit=5)
+    ability_lines = _wrap_block([ability_text], BODY_WRAP_UNITS, limit=6)
     verdict_source = _string_list(insights.get("card_verdict_lines")) or _string_list(insights.get("verdict_lines"))
-    verdict_lines = _wrap_block(verdict_source, 34.0, limit=3)
+    verdict_lines = _wrap_block(verdict_source, BODY_WRAP_UNITS, limit=4)
     breakthrough_source = _string_list(insights.get("card_breakthrough_lines")) or _string_list(insights.get("breakthrough_lines"))
-    breakthrough_lines = _wrap_block([_join_prose(breakthrough_source)], 34.0, limit=3)
+    breakthrough_lines = _wrap_block([_join_prose(breakthrough_source)], BODY_WRAP_UNITS, limit=4)
     theme = get_ai_level_theme(rank)
 
     model_name = _primary_model(payload)
@@ -103,8 +104,8 @@ def render_xiulian_card(payload: dict[str, object]) -> str:
   <rect x="{hero_x}" y="{hero_y}" width="{hero_w}" height="{hero_h}" rx="28" fill="#1B2732" stroke="#314554" stroke-width="2"/>
   <line x1="{hero_mid_x}" y1="{hero_y + 42}" x2="{hero_mid_x}" y2="{hero_y + hero_h - 42}" stroke="#324A5D" stroke-width="2"/>
 
-  <text x="600" y="{header_y}" fill="#17212B" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700">修炼.skill</text>
-  <text x="600" y="{slogan_y}" fill="#2B3640" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="600">蒸馏你的vibecoding能力</text>
+  <text x="600" y="{header_y}" fill="#13202A" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700">修炼.skill</text>
+  <text x="600" y="{slogan_y}" fill="#22313C" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="600">蒸馏你的vibecoding能力</text>
 
   {_label_pill(int(left_col_mid - 60), label_y - 32, 120, "境界", theme)}
   <text x="{left_col_mid}" y="{big_y}" fill="#FFFFFF" font-size="{BIG_FONT_SIZE}" text-anchor="middle" font-family="STKaiti, KaiTi, serif">{_escape(realm)}</text>
@@ -113,18 +114,18 @@ def render_xiulian_card(payload: dict[str, object]) -> str:
   <text x="{right_col_mid}" y="{big_y}" fill="{_escape(str(theme.get("accent", "#8EC5FF")))}" font-size="{BIG_FONT_SIZE}" text-anchor="middle" font-family="Inter, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">{_escape(rank)}</text>
 
   {_label_pill(content_x, ability_label_y - 32, 292, "vibecoding能力", theme)}
-  {_text_lines(ability_lines, x=content_x, y=ability_text_y, font_size=BASE_FONT_SIZE, line_height=BASE_LINE_HEIGHT, fill="#241D17", anchor="start", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif", weight="500")}
+  {_text_lines(ability_lines, x=content_x, y=ability_text_y, font_size=BASE_FONT_SIZE, line_height=BASE_LINE_HEIGHT, fill="#1F2328", anchor="start", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif", weight="500")}
   <line x1="{content_x}" y1="{divider_1_y}" x2="{content_x + content_w}" y2="{divider_1_y}" stroke="#D7C8B3" stroke-width="2"/>
   {_label_pill(content_x, verdict_label_y - 32, 120, "判词", theme)}
-  {_text_lines(verdict_lines, x=content_x, y=verdict_text_y, font_size=BASE_FONT_SIZE, line_height=BASE_LINE_HEIGHT, fill="#1C160F", anchor="start", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif", weight="500")}
+  {_text_lines(verdict_lines, x=content_x, y=verdict_text_y, font_size=BASE_FONT_SIZE, line_height=BASE_LINE_HEIGHT, fill="#1F2328", anchor="start", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif", weight="500")}
 
   <line x1="{content_x}" y1="{divider_2_y}" x2="{content_x + content_w}" y2="{divider_2_y}" stroke="#D7C8B3" stroke-width="2"/>
   {_label_pill(content_x, breakthrough_label_y - 32, 176, "突破方向", theme)}
-  {_text_lines(breakthrough_lines, x=content_x, y=breakthrough_text_y, font_size=BASE_FONT_SIZE, line_height=BASE_LINE_HEIGHT, fill="#1C160F", anchor="start", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif", weight="500")}
+  {_text_lines(breakthrough_lines, x=content_x, y=breakthrough_text_y, font_size=BASE_FONT_SIZE, line_height=BASE_LINE_HEIGHT, fill="#1F2328", anchor="start", family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif", weight="500")}
 
   <line x1="{content_x}" y1="{divider_3_y}" x2="{content_x + content_w}" y2="{divider_3_y}" stroke="#D7C8B3" stroke-width="2"/>
-  <text x="600" y="{meta_1_y}" fill="#544334" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">法器 { _escape(model_name) }  |  tokens { _escape(_token_name(payload)) }</text>
-  <text x="600" y="{meta_2_y}" fill="#5F4B39" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">称呼 { _escape(display_name) }  |  生成于 { _escape(generated_at) }</text>
+  <text x="600" y="{meta_1_y}" fill="#4A5560" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">法器 { _escape(model_name) }  |  tokens { _escape(_token_name(payload)) }</text>
+  <text x="600" y="{meta_2_y}" fill="#4A5560" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">称呼 { _escape(display_name) }  |  生成于 { _escape(generated_at) }</text>
 
 </svg>
 """

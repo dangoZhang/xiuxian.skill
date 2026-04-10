@@ -24,8 +24,8 @@
   <rect x="148" y="252" width="904" height="284" rx="28" fill="#1B2732" stroke="#314554" stroke-width="2"/>
   <line x1="600.0" y1="294" x2="600.0" y2="494" stroke="#324A5D" stroke-width="2"/>
 
-  <text x="600" y="154" fill="#17212B" font-size="30" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700">修炼.skill</text>
-  <text x="600" y="204" fill="#2B3640" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="600">蒸馏你的vibecoding能力</text>
+  <text x="600" y="154" fill="#13202A" font-size="30" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700">修炼.skill</text>
+  <text x="600" y="204" fill="#22313C" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="600">蒸馏你的vibecoding能力</text>
 
   
   <g>
@@ -46,25 +46,25 @@
     <rect x="148" y="560" width="292" height="44" rx="22" fill="#207496" stroke="#FFFFFF" stroke-width="2"/>
     <text x="294.0" y="590" fill="#FFFFFF" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">vibecoding能力</text>
   </g>
-  <text x="148" y="664" fill="#241D17" font-size="30" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="500"><tspan x="148" dy="0">已经会把常见来回沉淀成工作流，熟悉任务通常能稳定推进到多步完成。这轮</tspan><tspan x="148" dy="42">亮点在协作节奏和补救适配：你这边一来一回接得顺，AI这边遇阻也会换路</tspan><tspan x="148" dy="42">继续推。最该补的是结果验证和回看确认：你这边还不够主动要证据和验收，</tspan><tspan x="148" dy="42">AI这边对“改了什么、怎么验证、还有什么没验”交代得还不够完整。</tspan></text>
-  <line x1="148" y1="834" x2="1052" y2="834" stroke="#D7C8B3" stroke-width="2"/>
+  <text x="148" y="664" fill="#1F2328" font-size="30" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="500"><tspan x="148" dy="0">已经会把常见来回沉淀成工作流，熟悉任务通常能稳定推进到多</tspan><tspan x="148" dy="42">步完成。这轮亮点在协作节奏和补救适配：你这边一来一回接得</tspan><tspan x="148" dy="42">顺，AI这边遇阻也会换路继续推。最该补的是结果验证和回看</tspan><tspan x="148" dy="42">确认：你这边还不够主动要证据和验收，AI这边对“改了什</tspan><tspan x="148" dy="42">么、怎么验证、还有什么没验”交代得还不够完整。</tspan></text>
+  <line x1="148" y1="876" x2="1052" y2="876" stroke="#D7C8B3" stroke-width="2"/>
   
   <g>
-    <rect x="148" y="846" width="120" height="44" rx="22" fill="#207496" stroke="#FFFFFF" stroke-width="2"/>
-    <text x="208.0" y="876" fill="#FFFFFF" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">判词</text>
+    <rect x="148" y="888" width="120" height="44" rx="22" fill="#207496" stroke="#FFFFFF" stroke-width="2"/>
+    <text x="208.0" y="918" fill="#FFFFFF" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">判词</text>
   </g>
-  <text x="148" y="950" fill="#1C160F" font-size="30" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="500"><tspan x="148" dy="0">当前落在金丹/ L4。</tspan><tspan x="148" dy="42">这一层已经会把常见来回沉淀成工作流，熟悉任务通常能稳定推进到多步完</tspan><tspan x="148" dy="42">成。</tspan></text>
+  <text x="148" y="992" fill="#1F2328" font-size="30" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="500"><tspan x="148" dy="0">当前落在金丹/ L4。</tspan><tspan x="148" dy="42">这一层已经会把常见来回沉淀成工作流，熟悉任务通常能稳定推</tspan><tspan x="148" dy="42">进到多步完成。</tspan></text>
 
-  <line x1="148" y1="1078" x2="1052" y2="1078" stroke="#D7C8B3" stroke-width="2"/>
+  <line x1="148" y1="1120" x2="1052" y2="1120" stroke="#D7C8B3" stroke-width="2"/>
   
   <g>
-    <rect x="148" y="1090" width="176" height="44" rx="22" fill="#207496" stroke="#FFFFFF" stroke-width="2"/>
-    <text x="236.0" y="1120" fill="#FFFFFF" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">突破方向</text>
+    <rect x="148" y="1132" width="176" height="44" rx="22" fill="#207496" stroke="#FFFFFF" stroke-width="2"/>
+    <text x="236.0" y="1162" fill="#FFFFFF" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">突破方向</text>
   </g>
-  <text x="148" y="1194" fill="#1C160F" font-size="30" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="500"><tspan x="148" dy="0">下一轮先把目标、边界和验收写在前面，再让AI动手；每轮结束都补一句：</tspan><tspan x="148" dy="42">改了什么、怎么验证、还有什么没验。</tspan></text>
+  <text x="148" y="1236" fill="#1F2328" font-size="30" text-anchor="start" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="500"><tspan x="148" dy="0">下一轮先把目标、边界和验收写在前面，再让AI动手；每轮结</tspan><tspan x="148" dy="42">束都补一句：改了什么、怎么验证、还有什么没验。</tspan></text>
 
-  <line x1="148" y1="1280" x2="1052" y2="1280" stroke="#D7C8B3" stroke-width="2"/>
-  <text x="600" y="1352" fill="#544334" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">法器 Codex  |  tokens 2,892</text>
-  <text x="600" y="1410" fill="#5F4B39" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">称呼 张道友  |  生成于 2026-04-10 15:41</text>
+  <line x1="148" y1="1322" x2="1052" y2="1322" stroke="#D7C8B3" stroke-width="2"/>
+  <text x="600" y="1394" fill="#4A5560" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">法器 Codex  |  tokens 2,892</text>
+  <text x="600" y="1452" fill="#4A5560" font-size="30" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">称呼 张道友  |  生成于 2026-04-10 16:05</text>
 
 </svg>

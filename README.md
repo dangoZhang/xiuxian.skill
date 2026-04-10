@@ -9,7 +9,7 @@
 [![Codex](https://img.shields.io/badge/Codex-Skill-111111)](https://developers.openai.com/codex/skills)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Skill-7C3AED)](https://claude.ai/code)
 [![AgentSkills](https://img.shields.io/badge/AgentSkills-Standard-8BC34A)](https://agentskills.io/)
-[![Download ZIP](https://img.shields.io/badge/Download-ZIP-2EA44F)](https://github.com/dangoZhang/修炼.skill/archive/refs/heads/main.zip)
+[![Download ZIP](https://img.shields.io/badge/Download-ZIP-2EA44F)](https://github.com/dangoZhang/xiulian.skill/archive/refs/heads/main.zip)
 
 读取真实运行卷宗，蒸馏你的 `vibecoding` 能力  
 把全部会话或指定时间窗炼成一张可晒的修炼卡  
@@ -98,7 +98,7 @@
 优先用 open agent skills 生态的安装方式，分发阻力最低：
 
 ```bash
-npx skills add https://github.com/dangoZhang/修炼.skill -a codex -a claude-code -a cursor -a opencode -a openclaw
+npx skills add https://github.com/dangoZhang/xiulian.skill -a codex -a claude-code -a cursor -a opencode -a openclaw
 ```
 
 如果宿主不走 `npx skills`，再手动放到对应目录。
@@ -112,24 +112,24 @@ npx skills add https://github.com/dangoZhang/修炼.skill -a codex -a claude-cod
 
 ```bash
 mkdir -p ~/.codex/skills
-git clone https://github.com/dangoZhang/修炼.skill.git ~/.codex/skills/xiulian-skill
+git clone https://github.com/dangoZhang/xiulian.skill.git ~/.codex/skills/xiulian-skill
 ```
 
 ```bash
 mkdir -p ~/.claude/skills
-git clone https://github.com/dangoZhang/修炼.skill.git ~/.claude/skills/xiulian-skill
+git clone https://github.com/dangoZhang/xiulian.skill.git ~/.claude/skills/xiulian-skill
 ```
 
 ```bash
 mkdir -p ~/.openclaw/skills
-git clone https://github.com/dangoZhang/修炼.skill.git ~/.openclaw/skills/xiulian-skill
+git clone https://github.com/dangoZhang/xiulian.skill.git ~/.openclaw/skills/xiulian-skill
 ```
 
 VS Code / GitHub Copilot 官方会从 `.github/skills`、`.claude/skills`、`~/.copilot/skills`、`~/.claude/skills` 发现 skills。最稳妥的项目级放法是：
 
 ```bash
 mkdir -p .github/skills
-git clone https://github.com/dangoZhang/修炼.skill.git .github/skills/xiulian-skill
+git clone https://github.com/dangoZhang/xiulian.skill.git .github/skills/xiulian-skill
 ```
 
 ### 可选依赖
