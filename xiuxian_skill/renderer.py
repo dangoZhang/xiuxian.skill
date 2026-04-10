@@ -3,7 +3,6 @@ from __future__ import annotations
 from .analyzer import infer_talent, infer_talent_from_models
 from .insights import build_analysis_insights
 from .models import Analysis, MetricScore
-from .parsers import redact_path
 from .xianxia import derive_xianxia_profile
 
 
@@ -18,17 +17,16 @@ def render_markdown(
     insight_payload = insights or build_analysis_insights(analysis)
     talent = infer_talent(analysis.transcript)
     sections = [
-        "# 修仙.skil 修仙报告",
+        "# 修仙.skil 能力报告",
         "",
-        "## 炼化概览",
+        "## 本轮概览",
         analysis.overview,
         f"- 命主：`{analysis.transcript.display_name or '道友'}`",
         f"- 来源：`{analysis.transcript.source}`",
-        f"- 卷宗：`{redact_path(analysis.transcript.path)}`",
     ]
     if generated_at:
-        sections.append(f"- 起炉时间：`{generated_at}`")
-    sections.extend(_render_token_lines(analysis.transcript.token_usage, label="本轮耗材"))
+        sections.append(f"- 生成时间：`{generated_at}`")
+    sections.extend(_render_token_lines(analysis.transcript.token_usage, label="本轮 tokens"))
     if talent:
         sections.extend(
             [
@@ -46,10 +44,10 @@ def render_markdown(
     sections.extend(
         [
             "",
-            "## 炼化细目",
-            _render_metrics("命主修行", analysis.user_metrics),
+            "## 细项评分",
+            _render_metrics("你这边", analysis.user_metrics),
             "",
-            _render_metrics("分身手段", analysis.assistant_metrics),
+            _render_metrics("AI 这边", analysis.assistant_metrics),
         ]
     )
     return "\n".join(sections).strip() + "\n"
@@ -66,16 +64,16 @@ def render_aggregate_markdown(
     insight_payload = insights or {}
     talent = infer_talent_from_models(aggregate.get("models", []))
     sections = [
-        "# 修仙.skil 总报告",
+        "# 修仙.skil 聚合报告",
         "",
-        "## 炼化概览",
+        "## 本轮概览",
         str(aggregate["overview"]),
         f"- 命主：`{aggregate.get('display_name', '道友')}`",
-        f"- 纳入会话：`{aggregate['sessions_used']}` / `总会话 {aggregate['sessions_total']}`",
+        f"- 纳入样本：`{aggregate['sessions_used']}` / `总样本 {aggregate['sessions_total']}`",
     ]
     if generated_at:
-        sections.append(f"- 起炉时间：`{generated_at}`")
-    sections.extend(_render_token_lines(aggregate.get("token_usage", {}), label="本周期耗材"))
+        sections.append(f"- 生成时间：`{generated_at}`")
+    sections.extend(_render_token_lines(aggregate.get("token_usage", {}), label="本周期 tokens"))
     if talent:
         sections.extend(
             [
@@ -95,10 +93,10 @@ def render_aggregate_markdown(
     sections.extend(
         [
             "",
-            "## 炼化细目",
-            _render_metrics("命主修行", aggregate["user_metrics"]),
+            "## 细项评分",
+            _render_metrics("你这边", aggregate["user_metrics"]),
             "",
-            _render_metrics("分身手段", aggregate["assistant_metrics"]),
+            _render_metrics("AI 这边", aggregate["assistant_metrics"]),
         ]
     )
     return "\n".join(sections).strip() + "\n"
@@ -119,7 +117,7 @@ def render_comparison_markdown(
     if comparison.get("display_name"):
         sections.append(f"- 命主：`{comparison['display_name']}`")
     if generated_at:
-        sections.append(f"- 起炉时间：`{generated_at}`")
+        sections.append(f"- 生成时间：`{generated_at}`")
     sections.extend(["", _render_comparison_track("境界变化", comparison["user"])])
     sections.extend(["", _render_comparison_track("等级变化", comparison["assistant"])])
     return "\n".join(sections).strip() + "\n"
@@ -128,10 +126,10 @@ def render_comparison_markdown(
 def _render_cultivation_judgement(insights: dict[str, object]) -> str:
     breakthrough_lines = _string_list(insights.get("breakthrough_lines"))
     lines = [
-        "## 修为判定",
+        "## 层级判断",
         f"- 境界：`{insights.get('realm', '凡人')}`",
         f"- 等级：`{insights.get('rank', 'L1')}`",
-        f"- 蒸馏出的 vibecoding 修为：{insights.get('ability_text', '仍在引气试手。')}",
+        f"- vibecoding 判断：{insights.get('ability_text', '仍在引气试手。')}",
     ]
     if insights.get("usage_line"):
         lines.append(f"- 本轮规模：`{insights['usage_line']}`")
@@ -141,7 +139,7 @@ def _render_cultivation_judgement(insights: dict[str, object]) -> str:
         for item in verdict_lines:
             lines.append(f"- {item}")
     if breakthrough_lines:
-        lines.extend(["", "### 破境之法"])
+        lines.extend(["", "### 下一步"])
         for item in breakthrough_lines:
             lines.append(f"- {item}")
     return "\n".join(lines)
@@ -149,12 +147,12 @@ def _render_cultivation_judgement(insights: dict[str, object]) -> str:
 
 def _render_insights_section(insights: dict[str, object]) -> str:
     groups = [
-        ("### 命主修行", insights.get("user_summary_lines")),
-        ("### 分身手段", insights.get("assistant_summary_lines")),
-        ("### 宣发取材", insights.get("image_concepts")),
-        ("### 单卡依据", insights.get("report_basis_lines")),
+        ("### 你这边", insights.get("user_summary_lines")),
+        ("### AI 这边", insights.get("assistant_summary_lines")),
+        ("### 分享卡取材", insights.get("image_concepts")),
+        ("### 判断依据", insights.get("report_basis_lines")),
     ]
-    lines = ["## 炼化拆解"]
+    lines = ["## 拆解依据"]
     has_content = False
     for title, items in groups:
         values = _string_list(items)
@@ -197,7 +195,7 @@ def _render_coaching_section(insights: dict[str, object]) -> str:
         ("### 可直接对 AI 说", insights.get("coaching_prompt_lines")),
         ("### 建议节奏", insights.get("coaching_cycle_lines")),
     ]
-    lines = ["## 继续突破"]
+    lines = ["## 突破建议"]
     has_content = False
     for title, items in groups:
         values = _string_list(items)
@@ -214,7 +212,7 @@ def _render_xianxia_profile(payload: dict[str, object]) -> str:
     profile = derive_xianxia_profile(payload)
     if not profile:
         return ""
-    lines = ["## 观气所得"]
+    lines = ["## 补充信息"]
     for item in profile[:8]:
         detail = f"，{item['detail']}" if item.get("detail") else ""
         lines.append(f"- {item['term']}：`{item['value']}`{detail}")

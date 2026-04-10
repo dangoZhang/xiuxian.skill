@@ -1,125 +1,83 @@
 ---
 name: xiuxian-skill
-description: Read agent transcripts, judge cultivation realm and level, and render one shareable card.
+description: Distill vibecoding ability from real agent traces, judge realm and level, and optionally render a xianxia-style share card.
 ---
 
 # 修仙.skil
 
 ## What It Does
 
-`修仙.skil` 读取 agent 的真实运行卷宗，判断你当前的境界与等级。
+`修仙.skil` 默认先做一件事：
 
-默认输出很短，只先给：
+把真实协作轨迹翻译成人能立刻看懂的 `vibecoding` 判断。
+
+基础输出只有三层：
 
 - 境界
 - 等级
-- 一段简短判词
+- 一段简短判断
 
-用户明确要分享图时，再生成修仙卡。
+如果用户继续追问，再按需补：
 
-用户明确要继续修炼时，再补突破建议。
+- 为什么是这一层
+- 下一轮怎么突破
+- 一张修仙风格分享卡
+
+## Positioning
+
+这个 skill 的主语不是“修仙”，而是 `vibecoding`。
+
+修仙只是表达层，不是判断层。  
+默认回答优先用常见 AI / Agent 语言，把能力、短板和突破动作说清楚。  
+只有用户明确要求“境界感”“修仙味”或“分享卡”时，才切换到修仙叙事。
 
 ## When To Use
 
 当用户想要：
 
-- 看看自己最近和 AI 配合到了哪一层
-- 用真实卷宗蒸馏一张可晒图的修仙卡
-- 对比两个周期，看自己是否破境
-- 指定时间窗内做一次聚合判断
-
-如果宿主支持常驻规则，建议加一句：
-
-```md
-当用户想看最近与 AI 的协作方式、指定时间窗内的修为、和上次相比有没有破境，或想生成可分享的结果图时，优先调用 修仙.skil。先读取真实卷宗并判断境界与等级；只有用户明确要分享图时才生成修仙卡。
-```
-
-## Operating Flow
-
-1. 识别用户要分析单次、某段时间，还是做两个周期对比。
-2. 自动寻找最新卷宗，或按路径 / 时间窗取样。
-3. 解析会话并做聚合判断。
-4. 默认先返回境界、等级、简短判词。
-5. 用户要分享图，再生成单卡 PNG / SVG。
-6. 用户要继续提升，再补突破建议。
+- 看看自己最近和 AI 协作到了什么阶段
+- 判断自己是“还在试”还是已经形成稳定工作流
+- 复盘最近一轮为什么推进顺 / 为什么总卡住
+- 拿到下一轮可以立刻照做的突破建议
+- 生成一张可分享的修仙卡
 
 ## Progressive Disclosure
 
-1. 默认不生图。
-2. 用户只问“最近如何”，优先读最近一次或最近时间窗。
-3. 用户问“这一段时间”，优先走全量 / 时间窗聚合。
-4. 用户问“有没有突破”，优先走记忆对比或双周期对比。
-5. 用户问“怎么继续提升”，再给突破建议。
-6. 用户明确要晒图，再补单卡输出。
+1. 默认先读最近一次或用户指定时间窗。
+2. 默认先输出人话版判断：现在在哪一层，最强项是什么，最短板是什么。
+3. 用户问“为什么”，再补依据和拆解。
+4. 用户问“怎么提升”，再补突破建议。
+5. 用户问“给我一张卡”或明确想要修仙风格，再生成修仙卡。
 
-## Local Defaults
+## Operating Flow
 
-- Codex: `~/.codex/archived_sessions/`, `~/.codex/sessions/`
-- Claude Code: `~/.claude/projects/`
-- OpenCode: `~/.local/share/opencode/opencode.db`, `~/Library/Application Support/opencode/opencode.db`, 或 `opencode export <sessionID>`
-- OpenClaw: `~/.openclaw/agents/main/sessions/*.jsonl`
-- Cursor: `~/Library/Application Support/Cursor/User/workspaceStorage/`, `~/.config/Cursor/User/workspaceStorage/`
-- VS Code / VSCodium: `~/Library/Application Support/Code/User/workspaceStorage/`, `~/.config/Code/User/workspaceStorage/`, `~/.config/VSCodium/User/workspaceStorage/`
+1. 判断是单次、时间窗聚合，还是双周期对比。
+2. 自动寻找可用轨迹并完成解析。
+3. 先用常见 AI 语言概括能力层级。
+4. 再把结果投影成境界与等级。
+5. 用户需要分享层时，再切到修仙词汇表和卡片模板。
 
-## Prompt Surface
+## Language Rules
 
-用户最常见的自然语言入口有六类：
+- 默认不用硬扯修仙。
+- 默认先说人话，再加修仙映射。
+- `prompt`、`tool use`、`verification`、`context`、`workflow` 这类词优先保留常见 AI 说法。
+- 修仙叙事只在标题、判词、分享卡和少量比喻里出现。
+- 一旦修仙说法开始妨碍理解，立即退回人话。
 
-- 最近一次修为判断
-- 某段时间内的聚合判断
-- 两个周期之间的破境对比
-- 生成一张可分享的修仙卡
-- 记住这次结果，下次继续看突破
-- 继续带练下一轮，直接冲下一层
+## Good Prompts
 
-## Internal Capabilities
-
-这个 skill 的内部能力只有这几层：
-
-- 卷宗发现与读取
-- 多来源 transcript 解析
-- 稳定高位聚合判定
-- 修炼报告渲染
-- 突破教练计划渲染
-- 单卡 SVG / PNG 渲染
-- 本地记忆快照与破境对比
-
-## Agent Usage
-
-这是一个给 Code Agent / LLM Agent 使用的 skill。
-
-安装目录建议使用 `xiuxian-skill`，用户面对的名字使用 `修仙.skil`。
-
-用户不需要自己敲终端。安装后，Agent 应该自行：
-
-1. 判断该分析单次、聚合还是对比
-2. 找到卷宗路径或时间范围
-3. 运行内部 CLI
-4. 先返回境界与等级
-
-典型用户请求：
-
-- “请用 修仙.skil 炼化我最近一周的 Codex 卷宗。”
-- “看看我最近和 AI 配合修到了哪一层。”
-- “给我一张修仙卡。”
-- “比较一下我上个月和这个月有没有破境。”
-- “记住我这次的修为，下次直接告诉我有没有突破。”
-
-内部命令示例：
-
-```bash
-python3 -m xiuxian_skill.cli analyze --source codex --all
-python3 -m xiuxian_skill.cli analyze --source codex --since 2026-04-01 --until 2026-04-10
-python3 -m xiuxian_skill.cli analyze --path ~/.codex/archived_sessions/rollout-xxx.jsonl
-python3 -m xiuxian_skill.cli compare --before ./cycle-1.jsonl --after ./cycle-2.jsonl
-```
+- “看看我最近两周和 AI 协作到了什么境界。先用人话说，再给我一个修仙称号。”
+- “别只告诉我等级。告诉我这轮最拖后腿的是哪一个习惯。”
+- “帮我把最近 10 天的轨迹炼成一张分享卡，大字只保留境界和等级。”
+- “如果我想从 L4 冲到 L5，下一轮最值得补的一个动作是什么？”
 
 ## Output Contract
 
-最终回答保持简洁，优先给：
+默认回答优先给：
 
 1. 一段总览
-2. 境界 + 等级 + 修为判词
-3. 用户需要时再补突破动作
+2. 境界 + 等级
+3. 一条最关键的突破方向
 
-不要空喊概念。每一层判断都要能在卷宗里找到依据。
+用户继续追问时，再补更长的拆解、词汇映射和分享卡。

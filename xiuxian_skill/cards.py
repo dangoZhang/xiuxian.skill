@@ -105,7 +105,7 @@ def render_xiuxian_card(payload: dict[str, object]) -> str:
   <line x1="{hero_mid_x}" y1="{hero_y + 42}" x2="{hero_mid_x}" y2="{hero_y + hero_h - 42}" stroke="#324A5D" stroke-width="2"/>
 
   <text x="600" y="{header_y}" fill="#13202A" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700">修仙.skil</text>
-  <text x="600" y="{slogan_y}" fill="#22313C" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="600">蒸馏你的vibecoding能力</text>
+  <text x="600" y="{slogan_y}" fill="#22313C" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="600">把你的 vibecoding 炼成境界</text>
 
   {_label_pill(int(left_col_mid - 60), label_y - 32, 120, "境界", theme)}
   <text x="{left_col_mid}" y="{big_y}" fill="#FFFFFF" font-size="{BIG_FONT_SIZE}" text-anchor="middle" font-family="STKaiti, KaiTi, serif">{_escape(realm)}</text>
