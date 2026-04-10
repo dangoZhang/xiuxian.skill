@@ -1,4 +1,4 @@
-"""修炼.skill package."""
+"""修仙.skil package."""
 
 __all__ = ["__version__"]
 

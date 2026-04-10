@@ -4,5 +4,5 @@
 {"timestamp":"2026-04-09T10:00:05Z","type":"response_item","payload":{"type":"function_call","name":"exec_command","arguments":"{\"cmd\":\"rg --files\"}"}}
 {"timestamp":"2026-04-09T10:00:08Z","type":"event_msg","payload":{"type":"user_message","message":"进一步加上 Claude Code / OpenCode 适配，README 里写清默认目录和下一周期突破机制。"}}
 {"timestamp":"2026-04-09T10:00:12Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。最后补单卡示例输出，并做一次本地验证。"}]}}
-{"timestamp":"2026-04-09T10:00:15Z","type":"response_item","payload":{"type":"function_call","name":"exec_command","arguments":"{\"cmd\":\"python3 -m portrait_skill.cli analyze --path examples/demo_codex_session.jsonl\"}"}}
+{"timestamp":"2026-04-09T10:00:15Z","type":"response_item","payload":{"type":"function_call","name":"exec_command","arguments":"{\"cmd\":\"python3 -m xiuxian_skill.cli analyze --path examples/demo_codex_session.jsonl\"}"}}
 {"timestamp":"2026-04-09T10:00:16Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":2480,"cached_input_tokens":960,"output_tokens":412,"reasoning_output_tokens":128,"total_tokens":2892},"last_token_usage":{"input_tokens":620,"cached_input_tokens":192,"output_tokens":88,"reasoning_output_tokens":32,"total_tokens":708},"model_context_window":258400}}}

@@ -1,11 +1,11 @@
-# 修炼.skill 修炼报告
+# 修仙.skil 修仙报告
 
 ## 炼化概览
 共解析 4 条有效消息，用户 2 条，AI 2 条，工具调用 2 次。累计消耗 2892 token。
 - 命主：`张道友`
 - 来源：`codex`
-- 卷宗：`./examples/demo_codex_session.jsonl`
-- 起炉时间：`2026-04-10 16:05`
+- 卷宗：`~/my-project/xiuxianLLM/side-projects/portrait.skill/examples/demo_codex_session.jsonl`
+- 起炉时间：`2026-04-11 07:27`
 - 本轮耗材：`2,892 token`
 - token 明细：`输入 2,480 / 缓存 960 / 输出 412 / 推理 128`
 

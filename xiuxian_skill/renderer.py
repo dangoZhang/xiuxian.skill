@@ -18,7 +18,7 @@ def render_markdown(
     insight_payload = insights or build_analysis_insights(analysis)
     talent = infer_talent(analysis.transcript)
     sections = [
-        "# 修炼.skill 修炼报告",
+        "# 修仙.skil 修仙报告",
         "",
         "## 炼化概览",
         analysis.overview,
@@ -66,7 +66,7 @@ def render_aggregate_markdown(
     insight_payload = insights or {}
     talent = infer_talent_from_models(aggregate.get("models", []))
     sections = [
-        "# 修炼.skill 炼化总报告",
+        "# 修仙.skil 总报告",
         "",
         "## 炼化概览",
         str(aggregate["overview"]),
@@ -111,7 +111,7 @@ def render_comparison_markdown(
 ) -> str:
     del certificate_choice
     sections = [
-        "# 修炼.skill 破境报告",
+        "# 修仙.skil 破境报告",
         "",
         "## 对比概览",
         str(comparison["overview"]),

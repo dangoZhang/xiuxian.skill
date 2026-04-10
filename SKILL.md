@@ -1,62 +1,55 @@
 ---
-name: xiulian-skill
-description: Read Codex, Claude Code, OpenCode, OpenClaw, Cursor, or VS Code transcripts, distill vibe coding ability, issue one cultivation card, and guide the next breakthrough cycle.
+name: xiuxian-skill
+description: Read agent transcripts, judge cultivation realm and level, and render one shareable card.
 ---
 
-# 修炼.skill
+# 修仙.skil
 
 ## What It Does
 
-`修炼.skill` 读取 agent 的真实运行卷宗，蒸馏你在赛博时代的 `vibecoding` 能力。
+`修仙.skil` 读取 agent 的真实运行卷宗，判断你当前的境界与等级。
 
-它会给出一张单卡和一份可继续训练的报告，里面会给出：
+默认输出很短，只先给：
 
 - 境界
 - 等级
-- vibecoding 能力概括
-- 继续突破的训练重点
-- 可直接复制的下一轮提问模板
-- 会话规模与用量
+- 一段简短判词
 
-同时会保留一份轻量记忆，下次评测时自动告诉你有没有破境、涨功或停滞。
+用户明确要分享图时，再生成修仙卡。
+
+用户明确要继续修炼时，再补突破建议。
 
 ## When To Use
 
 当用户想要：
 
 - 看看自己最近和 AI 配合到了哪一层
-- 用真实卷宗蒸馏一张可晒图的修炼卡
-- 复盘自己的 vibecoding 能力
-- 找出短板并拿到下一轮训练法
-- 对比两个周期，看自己是否突破
-- 直接要一份“继续带我突破”的教练计划
+- 用真实卷宗蒸馏一张可晒图的修仙卡
+- 对比两个周期，看自己是否破境
+- 指定时间窗内做一次聚合判断
 
 如果宿主支持常驻规则，建议加一句：
 
 ```md
-当用户想看最近与 AI 的协作方式、指定时间窗内的修为、和上次相比有没有破境，或想生成可分享的结果图时，优先调用 修炼.skill。先读取真实卷宗并完成分析报告，只有用户明确要分享图时才生成修炼卡。
+当用户想看最近与 AI 的协作方式、指定时间窗内的修为、和上次相比有没有破境，或想生成可分享的结果图时，优先调用 修仙.skil。先读取真实卷宗并判断境界与等级；只有用户明确要分享图时才生成修仙卡。
 ```
-
-这样触发会更稳。
 
 ## Operating Flow
 
 1. 识别用户要分析单次、某段时间，还是做两个周期对比。
-2. 自动寻找最新卷宗，或按用户给的路径/时间窗取样。
-3. 解析会话，提炼命主与分身两条线。
-4. 以规则化分析定出境界、等级、能力描述与下一轮突破重点。
-5. 输出一份 markdown 修炼报告。
-6. 如用户要继续突破，再给出训练法、直接可复制的提示词和训练节奏。
-7. 如用户需要分享图，再生成一张单卡 PNG/SVG。
-8. 写入本地评测记忆，供下次直接对比突破。
+2. 自动寻找最新卷宗，或按路径 / 时间窗取样。
+3. 解析会话并做聚合判断。
+4. 默认先返回境界、等级、简短判词。
+5. 用户要分享图，再生成单卡 PNG / SVG。
+6. 用户要继续提升，再补突破建议。
 
 ## Progressive Disclosure
 
-1. 默认先出报告，不默认生图。
+1. 默认不生图。
 2. 用户只问“最近如何”，优先读最近一次或最近时间窗。
 3. 用户问“这一段时间”，优先走全量 / 时间窗聚合。
 4. 用户问“有没有突破”，优先走记忆对比或双周期对比。
-5. 用户问“怎么继续提升”，优先给突破教练计划。
+5. 用户问“怎么继续提升”，再给突破建议。
 6. 用户明确要晒图，再补单卡输出。
 
 ## Local Defaults
@@ -75,7 +68,7 @@ description: Read Codex, Claude Code, OpenCode, OpenClaw, Cursor, or VS Code tra
 - 最近一次修为判断
 - 某段时间内的聚合判断
 - 两个周期之间的破境对比
-- 生成一张可分享的修炼卡
+- 生成一张可分享的修仙卡
 - 记住这次结果，下次继续看突破
 - 继续带练下一轮，直接冲下一层
 
@@ -95,33 +88,30 @@ description: Read Codex, Claude Code, OpenCode, OpenClaw, Cursor, or VS Code tra
 
 这是一个给 Code Agent / LLM Agent 使用的 skill。
 
-安装目录建议使用 `xiulian-skill`，用户面对的名字使用 `修炼.skill`。
+安装目录建议使用 `xiuxian-skill`，用户面对的名字使用 `修仙.skil`。
 
 用户不需要自己敲终端。安装后，Agent 应该自行：
 
 1. 判断该分析单次、聚合还是对比
 2. 找到卷宗路径或时间范围
 3. 运行内部 CLI
-4. 返回简洁、可解释、带破境方向的结果
+4. 先返回境界与等级
 
 典型用户请求：
 
-- “请用 修炼.skill 炼化我最近一周的 Codex 卷宗。”
+- “请用 修仙.skil 炼化我最近一周的 Codex 卷宗。”
 - “看看我最近和 AI 配合修到了哪一层。”
-- “给我一张修炼卡。”
+- “给我一张修仙卡。”
 - “比较一下我上个月和这个月有没有破境。”
 - “记住我这次的修为，下次直接告诉我有没有突破。”
-- “继续带我突破，给我下一轮训练计划。”
 
 内部命令示例：
 
 ```bash
-python3 -m portrait_skill.cli analyze --source codex --all
-python3 -m portrait_skill.cli coach --source codex --all
-python3 -m portrait_skill.cli analyze --source codex --since 2026-04-01 --until 2026-04-10
-python3 -m portrait_skill.cli analyze --path ~/.codex/archived_sessions/rollout-xxx.jsonl
-python3 -m portrait_skill.cli analyze --source codex --all --memory-key weekly-codex
-python3 -m portrait_skill.cli compare --before ./cycle-1.jsonl --after ./cycle-2.jsonl
+python3 -m xiuxian_skill.cli analyze --source codex --all
+python3 -m xiuxian_skill.cli analyze --source codex --since 2026-04-01 --until 2026-04-10
+python3 -m xiuxian_skill.cli analyze --path ~/.codex/archived_sessions/rollout-xxx.jsonl
+python3 -m xiuxian_skill.cli compare --before ./cycle-1.jsonl --after ./cycle-2.jsonl
 ```
 
 ## Output Contract
@@ -130,6 +120,6 @@ python3 -m portrait_skill.cli compare --before ./cycle-1.jsonl --after ./cycle-2
 
 1. 一段总览
 2. 境界 + 等级 + 修为判词
-3. 1 到 2 条继续突破的动作
+3. 用户需要时再补突破动作
 
 不要空喊概念。每一层判断都要能在卷宗里找到依据。

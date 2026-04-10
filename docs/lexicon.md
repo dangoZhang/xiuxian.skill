@@ -2,7 +2,7 @@
 
 这份词表只约束对外叙事层。
 
-底层代码、JSON 和兼容字段里仍保留 `portrait_skill`、`certificate`、`user_certificate`、`assistant_certificate` 等历史名字，方便兼容旧链路；对外文案统一使用 `修炼.skill`、`修炼卡`、`修炼报告`。
+当前仓库统一使用 `xiuxian_skill`、`修仙.skil`、`修仙卡`、`修仙报告`。
 
 ## 当前正式词表
 
@@ -76,7 +76,7 @@
 
 这些词还会留在代码里，但不建议出现在对外宣传里：
 
-- `portrait_skill`
+- `xiuxian_skill`
 - `certificate`
 - `user_certificate`
 - `assistant_certificate`

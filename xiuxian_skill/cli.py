@@ -29,7 +29,7 @@ from .renderer import render_aggregate_markdown, render_coaching_markdown, rende
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="xiulian-skill",
+        prog="xiuxian-skill",
         description="Read agent transcripts, distill vibe coding ability, and issue a cultivation report.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -269,7 +269,7 @@ def _handle_coach(args) -> None:
         }
 
     markdown = render_coaching_markdown(
-        "修炼.skill 突破教练",
+        "修仙.skil 突破教练",
         display_name=str(payload.get("display_name") or "道友"),
         source=str(payload.get("source") or source),
         generated_at=generated_at,

@@ -67,27 +67,16 @@ def build_snapshot(
 
 
 def memory_store_path() -> Path:
-    override = os.getenv("XIULIAN_SKILL_HOME") or os.getenv("PORTRAIT_SKILL_HOME")
+    override = os.getenv("XIUXIAN_SKILL_HOME")
     if override:
         return Path(override).expanduser().resolve() / "history.json"
     if sys.platform == "darwin":
-        base = Path.home() / "Library" / "Application Support" / "xiulian-skill"
+        base = Path.home() / "Library" / "Application Support" / "xiuxian-skill"
     elif os.name == "nt":
-        base = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")) / "xiulian-skill"
+        base = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")) / "xiuxian-skill"
     else:
         xdg = os.getenv("XDG_DATA_HOME")
-        base = Path(xdg).expanduser() / "xiulian-skill" if xdg else Path.home() / ".local" / "share" / "xiulian-skill"
-    return base / "history.json"
-
-
-def legacy_memory_store_path() -> Path:
-    if sys.platform == "darwin":
-        base = Path.home() / "Library" / "Application Support" / "portrait-skill"
-    elif os.name == "nt":
-        base = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming")) / "portrait-skill"
-    else:
-        xdg = os.getenv("XDG_DATA_HOME")
-        base = Path(xdg).expanduser() / "portrait-skill" if xdg else Path.home() / ".local" / "share" / "portrait-skill"
+        base = Path(xdg).expanduser() / "xiuxian-skill" if xdg else Path.home() / ".local" / "share" / "xiuxian-skill"
     return base / "history.json"
 
 
@@ -127,10 +116,6 @@ def _find_previous(history: list[dict[str, object]], snapshot: dict[str, object]
 
 def _read_store() -> dict[str, object]:
     path = memory_store_path()
-    if not path.exists():
-        legacy = legacy_memory_store_path()
-        if legacy.exists():
-            path = legacy
     if not path.exists():
         return {"evaluations": []}
     try:

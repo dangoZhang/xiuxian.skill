@@ -14,7 +14,7 @@
 - Vercel 自己的 agent eval 也很直白：`Skill (default behavior)` 通过率 `53%`，加显式指令后到 `79%`，`AGENTS.md docs index` 到 `100%`。结论很明确，skill 要配一条常驻触发语。
 - Cursor 产品页已经把 skills 写成真实入口：`discover and run specialized prompts and code`。VS Code 文档则明确把 skills 定义为 `package multi-step capabilities`，并说明任务匹配时会按需加载。用户会期待“装完就能直接叫出来”，不接受一长段手工教程。
 
-## 对修炼.skill 的直接要求
+## 对修仙.skil 的直接要求
 
 - 第一屏必须先放结果图，先让人想试。
 - 第二屏只讲一句话卖点，不讲散文。
@@ -37,14 +37,14 @@
 可放进 `AGENTS.md`、`CLAUDE.md`、Copilot instructions 或类似的常驻规则里：
 
 ```md
-当用户想看最近与 AI 的协作方式、指定时间窗内的修为、和上次相比有没有破境，或想生成可分享的结果图时，优先调用 修炼.skill。先读取真实卷宗并完成分析报告，只有用户明确要分享图时才生成修炼卡。
+当用户想看最近与 AI 的协作方式、指定时间窗内的修为、和上次相比有没有破境，或想生成可分享的结果图时，优先调用 修仙.skil。先读取真实卷宗并判断境界与等级，只有用户明确要分享图时才生成修仙卡。
 ```
 
 ## 宣传帖
 
 ### GitHub 发布帖
 
-做了个 `修炼.skill`。
+做了个 `修仙.skil`。
 
 它不看自述，只读 Codex、Claude Code、OpenCode、OpenClaw、Cursor、VS Code 的真实运行卷宗，把你这一段时间的 `vibecoding` 轨迹炼成一张修炼卡。
 
@@ -61,7 +61,7 @@
 
 ### X / 即刻短帖
 
-做了个有点中二但很实用的东西：`修炼.skill`
+做了个有点中二但很实用的东西：`修仙.skil`
 
 它会读你真实的 agent 卷宗，蒸馏你最近的 `vibecoding` 能力，再给你一张修炼卡。
 
@@ -71,7 +71,7 @@
 
 ### 小红书 / 朋友圈长帖
 
-最近把一个一直想做的 idea 做出来了，叫 `修炼.skill`。
+最近把一个一直想做的 idea 做出来了，叫 `修仙.skil`。
 
 我越来越觉得，大家和 AI 协作的关键差距，是“已经修到了哪一层”。会不会用只是起点。有人还停在单轮问答，有人已经能把 workflow、tools、multi-agent orchestration 跑成稳定法门。
 

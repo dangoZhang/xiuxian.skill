@@ -19,14 +19,14 @@ def write_cards(payload: dict[str, object], output_dir: str | Path, certificate_
     del certificate_choice
     target_dir = Path(output_dir).expanduser().resolve()
     target_dir.mkdir(parents=True, exist_ok=True)
-    svg_path = target_dir / "xiulian-card.svg"
-    png_path = target_dir / "xiulian-card.png"
-    svg_path.write_text(render_xiulian_card(payload), encoding="utf-8")
+    svg_path = target_dir / "xiuxian-card.svg"
+    png_path = target_dir / "xiuxian-card.png"
+    svg_path.write_text(render_xiuxian_card(payload), encoding="utf-8")
     _render_png(svg_path, png_path)
     return {"card_svg": str(svg_path), "card_png": str(png_path)}
 
 
-def render_xiulian_card(payload: dict[str, object]) -> str:
+def render_xiuxian_card(payload: dict[str, object]) -> str:
     insights = _as_dict(payload.get("insights"))
     display_name = _get_display_name(payload)
     generated_at = _format_generated_at(payload.get("generated_at"))
@@ -104,7 +104,7 @@ def render_xiulian_card(payload: dict[str, object]) -> str:
   <rect x="{hero_x}" y="{hero_y}" width="{hero_w}" height="{hero_h}" rx="28" fill="#1B2732" stroke="#314554" stroke-width="2"/>
   <line x1="{hero_mid_x}" y1="{hero_y + 42}" x2="{hero_mid_x}" y2="{hero_y + hero_h - 42}" stroke="#324A5D" stroke-width="2"/>
 
-  <text x="600" y="{header_y}" fill="#13202A" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700">修炼.skill</text>
+  <text x="600" y="{header_y}" fill="#13202A" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="STKaiti, KaiTi, serif" font-weight="700">修仙.skil</text>
   <text x="600" y="{slogan_y}" fill="#22313C" font-size="{BASE_FONT_SIZE}" text-anchor="middle" font-family="PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif" font-weight="600">蒸馏你的vibecoding能力</text>
 
   {_label_pill(int(left_col_mid - 60), label_y - 32, 120, "境界", theme)}
