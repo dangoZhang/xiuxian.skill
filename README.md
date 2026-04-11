@@ -14,6 +14,10 @@
 
 <br>
 
+[中文](./README.md) · [English](./README_EN.md)
+
+<br>
+
 ### 效果示例
 
 <img src="./assets/readme/vibecoding-card.png" alt="vibecoding.skill 效果示例" width="54%" />
@@ -31,7 +35,7 @@
 
 `vibecoding.skill` 是一个装进 Code Agent 里的 skill。它会读取你最近一段时间和 AI 的真实协作记录，然后给出一份很直接的判断。
 
-你能拿它做三件事：
+你能拿它做四件事：
 
 - 看你现在的 vibecoding 等级到了哪一级
 - 蒸馏你自己的协作习惯，或者模仿别人的做事节奏

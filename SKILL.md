@@ -1,6 +1,6 @@
 ---
 name: vibecoding-skill
-description: Distill habits from real code-agent traces, mimic a person's vibecoding style, judge stage and level, and coach the user toward a target level.
+description: Distill habits from real code-agent traces, mimic a person's vibecoding style, judge stage and level, coach the user toward a target level, and export a shareable skill bundle.
 ---
 
 # vibecoding.skill
@@ -49,6 +49,7 @@ description: Distill habits from real code-agent traces, mimic a person's vibeco
 - 复盘最近一轮为什么推进顺 / 为什么总卡住
 - 拿到下一轮可以立刻照做的突破建议
 - 生成一张可分享的 vibecoding 卡
+- 导出一份可以直接交给别人安装的 `vibecoding` skill 包
 
 ## Progressive Disclosure
 
@@ -99,6 +100,8 @@ description: Distill habits from real code-agent traces, mimic a person's vibeco
 
 - 默认不用硬扯修仙。
 - 默认先说人话，再加修仙映射。
+- 如果用户明确要求英文，或轨迹与当前对话几乎全是英文，默认用英文输出报告、分享卡文案和导出说明。
+- 英文模式默认关闭修仙彩蛋，除非用户再次明确要求。
 - `prompt`、`tool use`、`verification`、`context`、`workflow` 这类词优先保留常见 AI 说法。
 - 当需要跟上最新 Agent 生态时，优先用当前常见说法，如 `memory`、`handoff`、`delegation`、`MCP`、`agentic workflows`，不要退回太老的“只会调 prompt”叙事。
 - 修仙叙事只在标题、判词、分享卡和少量比喻里出现。
