@@ -7,6 +7,7 @@ import unittest
 from vibecoding_skill.models import Message
 from vibecoding_skill.cards import build_card_data, render_vibecoding_card
 from vibecoding_skill.exporter import export_bundle
+from vibecoding_skill.readme_sync import replace_marked_section
 from vibecoding_skill.secondary_skill import (
     build_readme_profile_panel,
     build_secondary_skill_distillation,
@@ -72,7 +73,10 @@ class SecondarySkillDistillationTests(unittest.TestCase):
         self.assertTrue(panel["bullets"])
         self.assertLessEqual(len(panel["tags"]), 4)
         self.assertEqual(panel["title"], "你怎么和 AI 协作")
-        self.assertIn("你", panel["paragraphs"][0])
+        self.assertIn("码奸，你的水平已经达到了L4级", panel["paragraphs"][0])
+        self.assertIn("常见任务可以多步推进", panel["paragraphs"][0])
+        self.assertIn("第一段必须先给等级结论", panel["llm_prompt"])
+        self.assertIn("结构化画像", panel["llm_prompt"])
         self.assertIn("prompt", "".join(panel["paragraphs"]))
 
     def test_large_corpus_uses_coverage_ratio_instead_of_raw_count(self) -> None:
@@ -121,6 +125,65 @@ class SecondarySkillDistillationTests(unittest.TestCase):
         self.assertTrue(slug.startswith("vibecoding-profile-"))
         self.assertRegex(slug, r"^[a-z0-9-]+$")
         self.assertEqual(result_skill_slug("vibecoding-skill"), "vibecoding-skill")
+
+    def test_communication_axis_prefers_observed_brevity_over_declared_preference(self) -> None:
+        verbose_messages = [
+            Message(role="user", text="请你简洁一点，但下面我会用很长很长的一段话解释背景。" + "背景" * 120),
+            Message(role="assistant", text="收到。"),
+        ]
+        concise_messages = [
+            Message(role="user", text="修这个 bug。边界别动接口。验收跑测试。"),
+            Message(role="assistant", text="收到。"),
+        ]
+
+        verbose = build_secondary_skill_distillation(
+            messages=verbose_messages,
+            display_name="码奸",
+            source="codex",
+            rank="L4",
+            generated_at="2026-04-14 12:00",
+        )
+        concise = build_secondary_skill_distillation(
+            messages=concise_messages,
+            display_name="码奸",
+            source="codex",
+            rank="L4",
+            generated_at="2026-04-14 12:00",
+        )
+
+        verbose_axis = {axis["id"]: axis for axis in verbose["axes"]}["communication_compression"]
+        concise_axis = {axis["id"]: axis for axis in concise["axes"]}["communication_compression"]
+        self.assertLess(verbose_axis["score"], concise_axis["score"])
+
+    def test_panel_prefers_direct_insights_when_payload_is_available(self) -> None:
+        payload = {
+            "display_name": "码奸",
+            "insights": {
+                "rank": "L4",
+                "ability_text": "你已经能把常见任务沿着上下文稳定推到多步完成。 这轮最亮眼的是上下文铺垫。",
+                "habit_profile_lines": [
+                    "起手习惯：你通常会先抓住“上下文铺垫”，路径、背景和边界给得够，AI 更容易直接落地。",
+                    "推进习惯：AI 侧最像你的地方是“执行推进”，能先动手，再汇报，推进感比较强。",
+                    "容易掉点的地方：你这边的“迭代修正”和 AI 侧的“补救适配”还不够稳。",
+                ],
+                "breakthrough_lines": ["下一步最该补的是偏了之后的修正速度。"],
+            },
+            "secondary_skill": {
+                "display_name": "码奸",
+                "rank": "L4",
+                "axes": [
+                    {"id": "goal_framing", "score": 4},
+                    {"id": "context_supply", "score": 4},
+                    {"id": "verification_loop", "score": 4},
+                    {"id": "tool_orchestration", "score": 4},
+                ],
+            },
+        }
+
+        panel = build_readme_profile_panel(payload)
+        self.assertIn("你已经能把常见任务沿着上下文稳定推到多步完成", panel["paragraphs"][0])
+        self.assertIn("能先动手，再汇报", panel["paragraphs"][1])
+        self.assertIn("下一步最该补的是偏了之后的修正速度", panel["paragraphs"][2])
 
     def test_xianxia_card_uses_realm_and_sect_labels(self) -> None:
         payload = {
@@ -206,6 +269,11 @@ class SecondarySkillDistillationTests(unittest.TestCase):
             cursor_rule_path = Path(exported["cursor_rule"])
             self.assertTrue(cursor_rule_path.exists())
             self.assertIn("alwaysApply: false", cursor_rule_path.read_text(encoding="utf-8"))
+
+    def test_replace_marked_section_updates_only_target_range(self) -> None:
+        source = "before\n<!-- A -->\nold\n<!-- B -->\nafter\n"
+        updated = replace_marked_section(source, "<!-- A -->", "<!-- B -->", "<!-- A -->\nnew\n<!-- B -->")
+        self.assertEqual(updated, "before\n<!-- A -->\nnew\n<!-- B -->\nafter\n")
 
 
 if __name__ == "__main__":

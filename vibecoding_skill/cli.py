@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
@@ -52,7 +53,9 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--limit", type=int, help="Cap the number of sessions after filtering.")
     analyze.add_argument("--min-messages", type=int, default=8, help="Exclude tiny sessions below this message count in aggregate mode.")
     analyze.add_argument("--memory-key", help="Custom memory group key. Reuse it across cycles to compare with the previous evaluation.")
-    analyze.add_argument("--no-memory", action="store_true", help="Do not read or write local evaluation memory.")
+    analyze.add_argument("--memory", dest="memory_enabled", action="store_true", help="Read and write local evaluation memory. Off by default for one-off runs.")
+    analyze.add_argument("--no-memory", dest="memory_enabled", action="store_false", help=argparse.SUPPRESS)
+    analyze.set_defaults(memory_enabled=False)
     analyze.add_argument("--target-level", choices=[f"L{i}" for i in range(1, 11)], help="Optional target vibecoding level for upgrade coaching.")
     analyze.add_argument("--output", help="Write markdown report to a file.")
     analyze.add_argument("--json-output", help="Write structured JSON summary to a file.")
@@ -72,7 +75,9 @@ def build_parser() -> argparse.ArgumentParser:
     export.add_argument("--limit", type=int, help="Cap the number of sessions after filtering.")
     export.add_argument("--min-messages", type=int, default=8, help="Exclude tiny sessions below this message count in aggregate mode.")
     export.add_argument("--memory-key", help="Custom memory group key. Reuse it across cycles to compare with the previous evaluation.")
-    export.add_argument("--no-memory", action="store_true", help="Do not read or write local evaluation memory.")
+    export.add_argument("--memory", dest="memory_enabled", action="store_true", help="Read and write local evaluation memory. Off by default for one-off runs.")
+    export.add_argument("--no-memory", dest="memory_enabled", action="store_false", help=argparse.SUPPRESS)
+    export.set_defaults(memory_enabled=False)
     export.add_argument("--target-level", choices=[f"L{i}" for i in range(1, 11)], help="Optional target vibecoding level for upgrade coaching.")
     export.add_argument("--card-style", choices=["auto", "default", "xianxia"], default="auto", help="Card style. Auto switches to xianxia when the transcript clearly asks for 修仙 / 境界.")
     export.add_argument("--export-dir", required=True, help="Directory to write the shareable skill bundle into.")
@@ -193,7 +198,7 @@ def _build_analysis_result(args):
     latest_terms = _refresh_terms_if_requested(args)
     certificate_choice = getattr(args, "certificate", "both")
     target_level = getattr(args, "target_level", None)
-    no_memory = bool(getattr(args, "no_memory", True))
+    memory_enabled = bool(getattr(args, "memory_enabled", False))
     analysis = None
     aggregate = None
     distill_messages = []
@@ -291,8 +296,8 @@ def _build_analysis_result(args):
     scope_label = scope_label.replace(f"{source}:", f"{snapshot_source}:")
 
     memory_summary = None
-    if not no_memory:
-        memory_key = args.memory_key or f"{snapshot_source}:{scope_kind}"
+    if memory_enabled:
+        memory_key = args.memory_key or _default_memory_key(args, payload, snapshot_source, scope_kind)
         snapshot = build_snapshot(
             payload,
             source=snapshot_source,
@@ -379,9 +384,8 @@ def _handle_compare(args) -> None:
         _apply_display_name(after_transcript, args.username, track=args.certificate)
         after = analyze_transcript(after_transcript)
     else:
-        if source == "auto":
-            source = "codex"
-        after_transcript = load_transcript(_latest_ref(source), source=source)
+        after_source = _resolve_compare_source(source, before_transcript.source)
+        after_transcript = load_transcript(_latest_ref(after_source), source=after_source)
         _apply_display_name(after_transcript, args.username, track=args.certificate)
         after = analyze_transcript(after_transcript)
 
@@ -516,7 +520,10 @@ def _handle_coach(args) -> None:
 
 
 def _handle_refresh_terms(args) -> None:
-    result = refresh_term_catalog(args.output_dir)
+    try:
+        result = refresh_term_catalog(args.output_dir)
+    except RuntimeError as exc:
+        raise SystemExit(str(exc)) from exc
     print(json.dumps(result, ensure_ascii=False, indent=2))
     if args.json_output:
         output_path = Path(args.json_output).expanduser().resolve()
@@ -643,6 +650,25 @@ def _scope_label(source: str, scope_kind: str, args) -> str:
     return f"{source}:单次记录"
 
 
+def _default_memory_key(args, payload: dict[str, object], source: str, scope_kind: str) -> str:
+    if scope_kind == "path":
+        transcript = payload.get("transcript")
+        if isinstance(transcript, dict):
+            path = transcript.get("path")
+            if isinstance(path, str) and path:
+                return f"{source}:{scope_kind}:{_fingerprint_value(path)}"
+    if scope_kind == "window":
+        since = getattr(args, "since", None) or "earliest"
+        until = getattr(args, "until", None) or "latest"
+        limit = getattr(args, "limit", None) or "all"
+        return f"{source}:{scope_kind}:{since}:{until}:{limit}"
+    return f"{source}:{scope_kind}"
+
+
+def _fingerprint_value(value: str) -> str:
+    return hashlib.sha1(value.encode("utf-8")).hexdigest()[:12]
+
+
 def _aggregate_scope(analyses, refs, min_messages: int):
     paired = [(analysis, ref) for analysis, ref in zip(analyses, refs) if len(analysis.transcript.messages) >= min_messages]
     if not paired:
@@ -659,6 +685,10 @@ def _payload_source(payload: dict[str, object], fallback: str) -> str:
         if isinstance(source, str) and source:
             return source
     return fallback
+
+
+def _resolve_compare_source(requested_source: str, before_source: str) -> str:
+    return before_source if requested_source == "auto" else requested_source
 
 
 def _apply_display_name(transcript, override: str | None, track: str) -> None:
@@ -691,7 +721,10 @@ def _refresh_terms_if_requested(args) -> dict[str, str] | None:
     if not getattr(args, "refresh_terms", False):
         return None
     output_dir = getattr(args, "terms_dir", None) or "docs"
-    return refresh_term_catalog(output_dir)
+    try:
+        return refresh_term_catalog(output_dir)
+    except RuntimeError as exc:
+        raise SystemExit(str(exc)) from exc
 
 
 if __name__ == "__main__":

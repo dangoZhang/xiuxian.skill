@@ -5,7 +5,7 @@
   "result_skill_title": "码奸.skill",
   "source": "codex",
   "rank": "L4",
-  "generated_at": "2026-04-14 04:29",
+  "generated_at": "2026-04-14 05:06",
   "compression_mode": "first_two_sentences",
   "message_count": 4,
   "user_message_count": 2,
@@ -220,16 +220,17 @@
         "4": "目标、边界、验收和起手动作都清楚，agent 可直接接手。"
       },
       "score": 4,
-      "coverage_ratio": 0.75,
-      "confidence": 0.75,
+      "coverage_ratio": 0.3384,
+      "confidence": 0.61,
       "summary": "起手偏好先说清目标、边界和验收，再让 agent 接手执行。",
       "evidence_count": 3,
+      "weighted_evidence_count": 1.354,
       "user_evidence_count": 1,
       "assistant_evidence_count": 2,
       "examples": [
         "我们做一个新的 skill。目标是解析 codex 日志并生成一张修仙修为卡。约束：纯本地、独立 git、README 要像爆款 skill 项目。输出物：CLI、SKILL.md、README、示例。",
         "我先确认日志格式和仓库结构，再搭一个独立目录，把解析、打分和单卡输出接起来。",
-        "我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。最后补单卡示例输出，并做一次本地验证。"
+        "我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。 最后补单卡示例输出，并做一次本地验证。"
       ]
     },
     {
@@ -244,17 +245,18 @@
         "4": "路径、文件、背景和历史一次给够，来回确认很少。"
       },
       "score": 4,
-      "coverage_ratio": 1.0,
-      "confidence": 0.85,
+      "coverage_ratio": 0.5152,
+      "confidence": 0.7,
       "summary": "偏好把路径、文件、背景和历史直接交给 agent，减少来回确认。",
       "evidence_count": 4,
+      "weighted_evidence_count": 2.061,
       "user_evidence_count": 2,
       "assistant_evidence_count": 2,
       "examples": [
         "我们做一个新的 skill。目标是解析 codex 日志并生成一张修仙修为卡。约束：纯本地、独立 git、README 要像爆款 skill 项目。输出物：CLI、SKILL.md、README、示例。",
         "我先确认日志格式和仓库结构，再搭一个独立目录，把解析、打分和单卡输出接起来。",
         "进一步加上 Claude Code / OpenCode 适配，README 里写清默认目录和下一周期突破机制。",
-        "我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。最后补单卡示例输出，并做一次本地验证。"
+        "我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。 最后补单卡示例输出，并做一次本地验证。"
       ]
     },
     {
@@ -269,10 +271,11 @@
         "4": "必须项、禁忌、优先级和兼容要求都可直接执行。"
       },
       "score": 1,
-      "coverage_ratio": 0.25,
-      "confidence": 0.45,
+      "coverage_ratio": 0.0884,
+      "confidence": 0.39,
       "summary": "已有初步信号，说明会主动把必须项、禁忌和优先级讲清，避免执行时跑偏。",
       "evidence_count": 1,
+      "weighted_evidence_count": 0.354,
       "user_evidence_count": 1,
       "assistant_evidence_count": 0,
       "examples": [
@@ -290,14 +293,18 @@
         "2": "会要求简洁，但并不稳定。",
         "4": "长期偏好短句、高密度、结论优先的表达。"
       },
-      "score": 0,
-      "coverage_ratio": 0.0,
-      "confidence": 0.25,
-      "summary": "当前记录里，沟通压缩度偏好还不够明确。",
-      "evidence_count": 0,
-      "user_evidence_count": 0,
+      "score": 3,
+      "coverage_ratio": 0.5,
+      "confidence": 0.52,
+      "summary": "真实消息本身就偏短句、高密度、结论优先，不主要靠口头强调简洁。",
+      "evidence_count": 2,
+      "weighted_evidence_count": 2.0,
+      "user_evidence_count": 2,
       "assistant_evidence_count": 0,
-      "examples": []
+      "examples": [
+        "我们做一个新的 skill。目标是解析 codex 日志并生成一张修仙修为卡。约束：纯本地、独立 git、README 要像爆款 skill 项目。输出物：CLI、SKILL.md、README、示例。",
+        "进一步加上 Claude Code / OpenCode 适配，README 里写清默认目录和下一周期突破机制。"
+      ]
     },
     {
       "id": "execution_preference",
@@ -311,10 +318,11 @@
         "4": "默认先执行，再回报，说明不挡路。"
       },
       "score": 1,
-      "coverage_ratio": 0.25,
-      "confidence": 0.45,
+      "coverage_ratio": 0.0884,
+      "confidence": 0.39,
       "summary": "已有初步信号，说明更偏好直接动手、直接出结果，解释不要挡在执行前面。",
       "evidence_count": 1,
+      "weighted_evidence_count": 0.354,
       "user_evidence_count": 1,
       "assistant_evidence_count": 0,
       "examples": [
@@ -337,6 +345,7 @@
       "confidence": 0.25,
       "summary": "当前记录里，任务拆解能力信号还不够多。",
       "evidence_count": 0,
+      "weighted_evidence_count": 0.0,
       "user_evidence_count": 0,
       "assistant_evidence_count": 0,
       "examples": []
@@ -353,10 +362,11 @@
         "4": "文件、命令、日志、脚本和连接器会联动使用。"
       },
       "score": 2,
-      "coverage_ratio": 0.5,
-      "confidence": 0.65,
+      "coverage_ratio": 0.2134,
+      "confidence": 0.55,
       "summary": "倾向让 agent 读文件、跑命令、查日志、落脚本，而不是停在口头判断。",
       "evidence_count": 2,
+      "weighted_evidence_count": 0.854,
       "user_evidence_count": 1,
       "assistant_evidence_count": 1,
       "examples": [
@@ -380,6 +390,7 @@
       "confidence": 0.25,
       "summary": "当前记录里，上下文承接信号还不够稳定。",
       "evidence_count": 0,
+      "weighted_evidence_count": 0.0,
       "user_evidence_count": 0,
       "assistant_evidence_count": 0,
       "examples": []
@@ -396,14 +407,15 @@
         "4": "能快速定位关键偏差，最小修正后继续推进。"
       },
       "score": 1,
-      "coverage_ratio": 0.25,
-      "confidence": 0.45,
+      "coverage_ratio": 0.125,
+      "confidence": 0.41,
       "summary": "已有初步信号，说明倾向短回合迭代，看到偏差就补一条关键修正继续推进。",
       "evidence_count": 1,
+      "weighted_evidence_count": 0.5,
       "user_evidence_count": 0,
       "assistant_evidence_count": 1,
       "examples": [
-        "我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。最后补单卡示例输出，并做一次本地验证。"
+        "我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。 最后补单卡示例输出，并做一次本地验证。"
       ]
     },
     {
@@ -422,6 +434,7 @@
       "confidence": 0.25,
       "summary": "当前记录里，失败恢复信号还不够明确。",
       "evidence_count": 0,
+      "weighted_evidence_count": 0.0,
       "user_evidence_count": 0,
       "assistant_evidence_count": 0,
       "examples": []
@@ -438,16 +451,17 @@
         "4": "会交代怎么验、证据在哪、还有什么没验。"
       },
       "score": 4,
-      "coverage_ratio": 0.75,
-      "confidence": 0.75,
+      "coverage_ratio": 0.3384,
+      "confidence": 0.61,
       "summary": "默认要可验证结果，最好顺带交代验证方式和未验证项。",
       "evidence_count": 3,
+      "weighted_evidence_count": 1.354,
       "user_evidence_count": 1,
       "assistant_evidence_count": 2,
       "examples": [
         "我们做一个新的 skill。目标是解析 codex 日志并生成一张修仙修为卡。约束：纯本地、独立 git、README 要像爆款 skill 项目。输出物：CLI、SKILL.md、README、示例。",
         "我先确认日志格式和仓库结构，再搭一个独立目录，把解析、打分和单卡输出接起来。",
-        "我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。最后补单卡示例输出，并做一次本地验证。"
+        "我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。 最后补单卡示例输出，并做一次本地验证。"
       ]
     },
     {
@@ -462,10 +476,11 @@
         "4": "会稳定产出可交付、可复用的一组结果文件。"
       },
       "score": 2,
-      "coverage_ratio": 0.5,
-      "confidence": 0.55,
+      "coverage_ratio": 0.2652,
+      "confidence": 0.48,
       "summary": "偏好把结果落成 README、脚本、JSON、卡片或导出包这类明确产物。",
       "evidence_count": 2,
+      "weighted_evidence_count": 1.061,
       "user_evidence_count": 2,
       "assistant_evidence_count": 0,
       "examples": [
@@ -489,6 +504,7 @@
       "confidence": 0.25,
       "summary": "当前记录里，交接与记忆信号还不够稳定。",
       "evidence_count": 0,
+      "weighted_evidence_count": 0.0,
       "user_evidence_count": 0,
       "assistant_evidence_count": 0,
       "examples": []
@@ -505,10 +521,11 @@
         "4": "能主动沉成 skill、模板、流程和模块。"
       },
       "score": 1,
-      "coverage_ratio": 0.25,
-      "confidence": 0.45,
+      "coverage_ratio": 0.0884,
+      "confidence": 0.39,
       "summary": "已有初步信号，说明会把一次成功沉成 skill、模板、流程、规则或模块，方便继续复用。",
       "evidence_count": 1,
+      "weighted_evidence_count": 0.354,
       "user_evidence_count": 1,
       "assistant_evidence_count": 0,
       "examples": [
@@ -531,6 +548,7 @@
       "confidence": 0.25,
       "summary": "当前记录里，自主推进深度还缺少足够证据。",
       "evidence_count": 0,
+      "weighted_evidence_count": 0.0,
       "user_evidence_count": 0,
       "assistant_evidence_count": 0,
       "examples": []
@@ -551,6 +569,7 @@
       "confidence": 0.25,
       "summary": "当前记录里，并行和工作流化信号还不够多。",
       "evidence_count": 0,
+      "weighted_evidence_count": 0.0,
       "user_evidence_count": 0,
       "assistant_evidence_count": 0,
       "examples": []
@@ -559,9 +578,9 @@
   "layer_scores": [
     {
       "layer": "任务定义层",
-      "average_score": 2.47,
+      "average_score": 3.06,
       "dimension_count": 4,
-      "observed_dimensions": 3
+      "observed_dimensions": 4
     },
     {
       "layer": "执行控制层",
@@ -588,7 +607,7 @@
   ],
   "assistant_reply_samples": [
     "我先确认日志格式和仓库结构，再搭一个独立目录，把解析、打分和单卡输出接起来。",
-    "我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。最后补单卡示例输出，并做一次本地验证。"
+    "我会先把 Codex 跑通，再为 Claude Code / OpenCode 留出入口。 最后补单卡示例输出，并做一次本地验证。"
   ],
   "secondary_skill_contract": {
     "identity": "按 码奸 这套 vibecoding 习惯推进任务，不做人设扮演。",
@@ -602,7 +621,7 @@
     ],
     "guardrails": [
       "已有初步信号，说明会主动把必须项、禁忌和优先级讲清，避免执行时跑偏。",
-      "如果用户没有特别指定风格，默认短句、人话、结论优先。",
+      "真实消息本身就偏短句、高密度、结论优先，不主要靠口头强调简洁。",
       "如果事实不够，先补文件、日志或命令结果，不要硬猜。"
     ],
     "prompt_examples": [

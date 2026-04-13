@@ -79,7 +79,7 @@ def _render_readme(payload: dict[str, object], result_skill_name: str, result_sk
     usage_line = _insight(payload, "usage_line", "")
     habit_lines = _list_insight(payload, "habit_profile_lines")
     breakthrough_lines = _list_insight(payload, "breakthrough_lines")
-    panel = build_readme_profile_panel(_secondary_skill(payload))
+    panel = build_readme_profile_panel(payload)
     lines = [
         f"# {name} 的 vibecoding 导出包",
         "",
@@ -133,6 +133,7 @@ def _render_readme(payload: dict[str, object], result_skill_name: str, result_sk
             "",
             "## 这套习惯的摘要",
             "",
+            "- 画像来源：先对齐主报告里的直接画像结论，再用 16 维蒸馏补标签和摘要页文案。",
             f"- 等级：`{rank}`",
             f"- 判断：{ability}",
         ]

@@ -107,13 +107,22 @@ def refresh_term_catalog(output_dir: str | Path) -> dict[str, str]:
     root = Path(output_dir).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
     fetched_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    snippets = _fetch_snippets()
+    fetched_texts, failures = _fetch_source_texts()
+    if failures:
+        failed_names = ", ".join(item["name"] for item in failures)
+        raise RuntimeError(f"refresh-terms failed because official sources were unavailable: {failed_names}")
+    snippets = _fetch_snippets(fetched_texts)
+    if not snippets:
+        raise RuntimeError("refresh-terms failed because no terminology snippets could be extracted from the official sources.")
     term_rows = _build_term_rows(snippets)
+    if not term_rows:
+        raise RuntimeError("refresh-terms failed because no terminology rows could be built from the fetched sources.")
     markdown = _render_terms_markdown(fetched_at, term_rows)
     prompt = _render_term_prompt(fetched_at, term_rows)
     json_payload = {
         "fetched_at": fetched_at,
         "sources": TERM_SOURCES,
+        "fetched_source_count": len(fetched_texts),
         "terms": term_rows,
     }
 
@@ -130,9 +139,9 @@ def refresh_term_catalog(output_dir: str | Path) -> dict[str, str]:
     }
 
 
-def _fetch_snippets() -> list[TermSnippet]:
-    snippets: list[TermSnippet] = []
+def _fetch_source_texts() -> tuple[dict[str, str], list[dict[str, str]]]:
     fetched_texts: dict[str, str] = {}
+    failures: list[dict[str, str]] = []
     with ThreadPoolExecutor(max_workers=min(FETCH_MAX_WORKERS, len(TERM_SOURCES))) as executor:
         futures = {
             executor.submit(_fetch_text, str(source["url"])): source
@@ -142,10 +151,21 @@ def _fetch_snippets() -> list[TermSnippet]:
             source = futures[future]
             try:
                 text = future.result()
-            except Exception:
-                text = ""
-            if text:
-                fetched_texts[str(source["url"])] = text
+            except Exception as exc:
+                failures.append(
+                    {
+                        "name": str(source["name"]),
+                        "url": str(source["url"]),
+                        "error": str(exc) or exc.__class__.__name__,
+                    }
+                )
+                continue
+            fetched_texts[str(source["url"])] = text
+    return fetched_texts, failures
+
+
+def _fetch_snippets(fetched_texts: dict[str, str]) -> list[TermSnippet]:
+    snippets: list[TermSnippet] = []
     for source in TERM_SOURCES:
         text = fetched_texts.get(str(source["url"]), "")
         if not text:
@@ -165,14 +185,14 @@ def _fetch_text(url: str) -> str:
             "Accept": "text/html,application/xhtml+xml",
         },
     )
-    try:
-        with urlopen(request, timeout=FETCH_TIMEOUT_SECONDS) as response:
-            html = response.read().decode("utf-8", errors="ignore")
-    except Exception:
-        return ""
+    with urlopen(request, timeout=FETCH_TIMEOUT_SECONDS) as response:
+        html = response.read().decode("utf-8", errors="ignore")
     parser = _HTMLTextExtractor()
     parser.feed(html)
-    return parser.text()
+    text = parser.text()
+    if not text.strip():
+        raise ValueError(f"Empty response body for {url}")
+    return text
 
 
 def _extract_snippet(text: str, keyword: str) -> str:

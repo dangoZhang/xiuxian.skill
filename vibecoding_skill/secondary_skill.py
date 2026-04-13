@@ -287,7 +287,11 @@ def build_secondary_skill_distillation(
     compressed = [_compress_message(message, compression_mode=compression_mode) for message in messages if message.text.strip()]
     result_skill_name = result_skill_slug(display_name)
     result_skill_title = result_skill_title_from_display(display_name)
-    axes = [_build_axis(field, compressed, total_count=len(compressed)) for field in SECONDARY_SKILL_FIELDS]
+    axis_matches = _precompute_axis_matches(compressed)
+    axes = [
+        _build_axis(field, compressed, total_count=len(compressed), axis_matches=axis_matches)
+        for field in SECONDARY_SKILL_FIELDS
+    ]
     top_user_examples = [item["compressed"] for item in compressed if item["role"] == "user"][:8]
     top_assistant_examples = [item["compressed"] for item in compressed if item["role"] == "assistant"][:8]
     return {
@@ -389,35 +393,140 @@ def render_secondary_skill_markdown(distillation: dict[str, object]) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
-def build_readme_profile_panel(distillation: dict[str, object]) -> dict[str, object]:
+def build_readme_profile_panel(source: dict[str, object]) -> dict[str, object]:
+    insights, distillation = _panel_sources(source)
     axes = distillation.get("axes") if isinstance(distillation, dict) else []
     if not isinstance(axes, list):
         axes = []
     axis_map = {axis.get("id"): axis for axis in axes if isinstance(axis, dict) and axis.get("id")}
-    rank = str(distillation.get("rank") or "L1")
+    rank = str((insights or {}).get("rank") or distillation.get("rank") or "L1")
+    display_name = str(
+        source.get("display_name")
+        or _dict_get(_dict_get(source, "transcript"), "display_name")
+        or distillation.get("display_name")
+        or "你"
+    )
+    facts = _build_profile_facts(display_name, rank, axis_map, insights=insights)
 
-    return {
+    panel = {
         "title": "你怎么和 AI 协作",
+        "display_name": display_name,
+        "rank": rank,
         "tags": _readme_tags(axis_map),
-        "paragraphs": [
-            item
-            for item in (
-                _compose_profile_paragraph(rank, axis_map),
-                _compose_workflow_paragraph(axis_map),
-                _compose_impression_paragraph(axis_map),
-            )
-            if item
-        ],
+        "facts": facts,
+        "paragraphs": _render_profile_paragraphs(facts),
         "bullets": _readme_bullets(axis_map),
+    }
+    panel["llm_prompt"] = _build_profile_llm_prompt(panel)
+    return panel
+
+
+def _panel_sources(source: dict[str, object]) -> tuple[dict[str, object], dict[str, object]]:
+    if not isinstance(source, dict):
+        return {}, {}
+    insights = source.get("insights")
+    secondary = source.get("secondary_skill")
+    if isinstance(secondary, dict):
+        return (insights if isinstance(insights, dict) else {}), secondary
+    return {}, source
+
+
+def _dict_get(source: object, key: str) -> object:
+    if isinstance(source, dict):
+        return source.get(key)
+    return None
+
+
+def _precompute_axis_matches(compressed: list[dict[str, str]]) -> list[set[str]]:
+    results: list[set[str]] = []
+    for item in compressed:
+        matched: set[str] = set()
+        for axis_id in AXIS_PATTERNS:
+            if axis_id == "communication_compression":
+                continue
+            if _message_matches_axis(item["compressed"], axis_id):
+                matched.add(axis_id)
+        results.append(matched)
+    return results
+
+
+def _weighted_evidence_count(matched_indexes: list[int], axis_matches: list[set[str]]) -> float:
+    total = 0.0
+    for index in matched_indexes:
+        overlap = len(axis_matches[index]) if index < len(axis_matches) else 0
+        total += 1.0 / max(overlap, 1) ** 0.5
+    return total
+
+
+def _build_communication_axis(
+    field: dict[str, object],
+    compressed: list[dict[str, str]],
+    *,
+    total_count: int,
+) -> dict[str, object]:
+    user_messages = [item["compressed"] for item in compressed if item["role"] == "user" and item["compressed"].strip()]
+    score, avg_length = _score_communication_compression(user_messages)
+    examples = user_messages[:4]
+    evidence_count = len(user_messages)
+    coverage_ratio = round(len(user_messages) / max(total_count, 1), 4)
+    confidence = 0.25 if not user_messages else round(min(0.4 + min(0.35, len(user_messages) * 0.06), 0.9), 2)
+    if not user_messages:
+        summary = INSUFFICIENT_SUMMARIES["communication_compression"]
+    elif score >= 3:
+        summary = "真实消息本身就偏短句、高密度、结论优先，不主要靠口头强调简洁。"
+    elif score == 2:
+        summary = f"沟通压缩度中等，消息平均长度约 {avg_length} 字，已经有结论优先倾向。"
+    else:
+        summary = f"真实消息仍偏长，消息平均长度约 {avg_length} 字，压缩风格还不够稳定。"
+    return {
+        "id": "communication_compression",
+        "label": field["label"],
+        "layer": field["layer"],
+        "weight": field["weight"],
+        "description": field["description"],
+        "anchors": field["anchors"],
+        "score": score,
+        "coverage_ratio": coverage_ratio,
+        "confidence": confidence,
+        "summary": summary,
+        "evidence_count": evidence_count,
+        "weighted_evidence_count": round(float(evidence_count), 3),
+        "user_evidence_count": evidence_count,
+        "assistant_evidence_count": 0,
+        "examples": examples,
     }
 
 
-def _build_axis(field: dict[str, object], compressed: list[dict[str, str]], *, total_count: int) -> dict[str, object]:
+def _score_communication_compression(user_messages: list[str]) -> tuple[int, int]:
+    if not user_messages:
+        return 0, 0
+    avg_length = round(sum(len(message) for message in user_messages) / len(user_messages))
+    short_ratio = sum(1 for message in user_messages if len(message) <= 90) / len(user_messages)
+    concise_ratio = sum(1 for message in user_messages if len(message.splitlines()) <= 6 and len(message) <= 140) / len(user_messages)
+    if avg_length <= 90 and short_ratio >= 0.6:
+        return 4, avg_length
+    if avg_length <= 130 and concise_ratio >= 0.5:
+        return 3, avg_length
+    if avg_length <= 200:
+        return 2, avg_length
+    return 1, avg_length
+
+def _build_axis(
+    field: dict[str, object],
+    compressed: list[dict[str, str]],
+    *,
+    total_count: int,
+    axis_matches: list[set[str]],
+) -> dict[str, object]:
     axis_id = str(field["id"])
+    if axis_id == "communication_compression":
+        return _build_communication_axis(field, compressed, total_count=total_count)
     matched = [item for item in compressed if _message_matches_axis(item["compressed"], axis_id)]
+    matched_indexes = [index for index, item in enumerate(compressed) if _message_matches_axis(item["compressed"], axis_id)]
     role_counter = Counter(item["role"] for item in matched)
-    score = _score_axis(matched, total_count=total_count)
-    coverage_ratio = round(len(matched) / max(total_count, 1), 4)
+    weighted_evidence = _weighted_evidence_count(matched_indexes, axis_matches)
+    score = _score_axis(matched, total_count=total_count, weighted_evidence=weighted_evidence)
+    coverage_ratio = round(weighted_evidence / max(total_count, 1), 4)
     return {
         "id": axis_id,
         "label": field["label"],
@@ -427,9 +536,10 @@ def _build_axis(field: dict[str, object], compressed: list[dict[str, str]], *, t
         "anchors": field["anchors"],
         "score": score,
         "coverage_ratio": coverage_ratio,
-        "confidence": _confidence(matched),
+        "confidence": _confidence(matched, weighted_evidence=weighted_evidence),
         "summary": _summarize_axis(axis_id, matched, score),
         "evidence_count": len(matched),
+        "weighted_evidence_count": round(weighted_evidence, 3),
         "user_evidence_count": role_counter.get("user", 0),
         "assistant_evidence_count": role_counter.get("assistant", 0),
         "examples": [item["compressed"] for item in matched[:4]],
@@ -460,24 +570,24 @@ def _build_layer_scores(axes: list[dict[str, object]]) -> list[dict[str, object]
     return results
 
 
-def _score_axis(matched: list[dict[str, str]], *, total_count: int) -> int:
-    count = len(matched)
-    if count == 0:
+def _score_axis(matched: list[dict[str, str]], *, total_count: int, weighted_evidence: float) -> int:
+    if weighted_evidence <= 0:
         return 0
+    count = len(matched)
     if total_count <= 12:
         if count <= 1:
             score = 1
-        elif count == 2:
+        elif weighted_evidence <= 1.25:
             score = 2
-        elif count <= 4:
+        elif weighted_evidence <= 2.5:
             score = 3
         else:
             score = 4
     else:
-        ratio = count / max(total_count, 1)
-        if ratio >= 0.15:
+        ratio = weighted_evidence / max(total_count, 1)
+        if ratio >= 0.12:
             score = 4
-        elif ratio >= 0.05:
+        elif ratio >= 0.04:
             score = 3
         elif ratio >= 0.01:
             score = 2
@@ -489,12 +599,12 @@ def _score_axis(matched: list[dict[str, str]], *, total_count: int) -> int:
     return min(score, 4)
 
 
-def _confidence(matched: list[dict[str, str]]) -> float:
+def _confidence(matched: list[dict[str, str]], *, weighted_evidence: float) -> float:
     count = len(matched)
     role_count = len({item["role"] for item in matched})
     if count == 0:
         return 0.25
-    confidence = 0.35 + min(0.45, count * 0.1) + (0.1 if role_count == 2 else 0.0)
+    confidence = 0.35 + min(0.45, weighted_evidence * 0.12) + (0.1 if role_count == 2 else 0.0)
     return round(min(confidence, 0.95), 2)
 
 
@@ -543,13 +653,142 @@ def _build_prompt_examples(display_name: str) -> list[str]:
     ]
 
 
-def _compose_profile_paragraph(rank: str, axis_map: dict[str, dict[str, object]]) -> str:
+PROFILE_LEVEL_SUMMARY = {
+    "L1": "还在用单轮问答试手",
+    "L2": "已经开始形成基本 prompt 手感",
+    "L3": "能把简单任务稳定做完",
+    "L4": "常见任务可以多步推进",
+    "L5": "开始把顺手打法沉成模板",
+    "L6": "已经能把一段具体工作交给 agent 先做",
+    "L7": "能调动多 agent、多工具协同推进",
+    "L8": "开始做系统级能力和工作流设计",
+    "L9": "能把 agent 拉进真实业务回路",
+    "L10": "这套方法已经能稳定复制给团队",
+}
+
+
+def _build_profile_facts(
+    display_name: str,
+    rank: str,
+    axis_map: dict[str, dict[str, object]],
+    *,
+    insights: dict[str, object] | None = None,
+) -> dict[str, str]:
+    if insights:
+        return {
+            "opening": _compose_profile_paragraph_from_insights(display_name, rank, insights),
+            "workflow": _compose_workflow_paragraph_from_insights(insights, axis_map),
+            "impression": _compose_impression_paragraph_from_insights(insights, axis_map),
+        }
+    return {
+        "opening": _compose_profile_paragraph(display_name, rank, axis_map),
+        "workflow": _compose_workflow_paragraph(axis_map),
+        "impression": _compose_impression_paragraph(axis_map),
+    }
+
+
+def _render_profile_paragraphs(facts: dict[str, str]) -> list[str]:
+    return [item for item in (facts.get("opening"), facts.get("workflow"), facts.get("impression")) if item]
+
+
+def _build_profile_llm_prompt(panel: dict[str, object]) -> str:
+    facts = panel.get("facts")
+    if not isinstance(facts, dict):
+        facts = {}
+    tags = panel.get("tags")
+    if not isinstance(tags, list):
+        tags = []
+    bullets = panel.get("bullets")
+    if not isinstance(bullets, list):
+        bullets = []
+    display_name = str(panel.get("display_name") or "用户")
+    rank = str(panel.get("rank") or "L1")
+    prompt_lines = [
+        "你是 README 文案编辑器，要把结构化画像润色成接近仓库首页英雄区的人话文案。",
+        "要求：",
+        "- 只保留 3 段短段落。",
+        "- 第一段必须先给等级结论，再进入协作画像。",
+        "- 风格要像资深工程师在讲协作方式，短句，高密度，结论优先。",
+        "- 不要发明结构化事实里没有的信息。",
+        "- 保留 code agent、prompt、L4 这类关键技术词。",
+        "- 禁止使用“不是……而是……”句式。",
+        "",
+        "结构化画像：",
+        f"- 用户：{display_name}",
+        f"- 等级：{rank}",
+        f"- 标签：{', '.join(str(item) for item in tags)}",
+        f"- 开场事实：{facts.get('opening', '')}",
+        f"- 执行事实：{facts.get('workflow', '')}",
+        f"- 总体判断：{facts.get('impression', '')}",
+    ]
+    if bullets:
+        prompt_lines.append(f"- 补充要点：{'；'.join(str(item) for item in bullets)}")
+    prompt_lines.extend(["", "输出：只给 3 段最终文案，不要解释。"])
+    return "\n".join(prompt_lines)
+
+
+def _compose_profile_paragraph_from_insights(display_name: str, rank: str, insights: dict[str, object]) -> str:
+    claim = _primary_claim_from_insights(insights, rank)
+    habit_lines = _list_of_strings(insights.get("habit_profile_lines"))
+    if habit_lines:
+        return f"{display_name}，你的水平已经达到了{rank}级，{claim}。{_strip_prefix(habit_lines[0])}"
+    return f"{display_name}，你的水平已经达到了{rank}级，{claim}。"
+
+
+def _compose_workflow_paragraph_from_insights(
+    insights: dict[str, object],
+    axis_map: dict[str, dict[str, object]],
+) -> str:
+    habit_lines = _list_of_strings(insights.get("habit_profile_lines"))
+    if len(habit_lines) >= 2:
+        return _strip_prefix(habit_lines[1])
+    return _compose_workflow_paragraph(axis_map)
+
+
+def _compose_impression_paragraph_from_insights(
+    insights: dict[str, object],
+    axis_map: dict[str, dict[str, object]],
+) -> str:
+    habit_lines = _list_of_strings(insights.get("habit_profile_lines"))
+    breakthrough_lines = _list_of_strings(insights.get("breakthrough_lines"))
+    if len(habit_lines) >= 3 and breakthrough_lines:
+        return f"{_strip_prefix(habit_lines[2])} {breakthrough_lines[0]}"
+    if len(habit_lines) >= 3:
+        return _strip_prefix(habit_lines[2])
+    return _compose_impression_paragraph(axis_map)
+
+
+def _primary_claim_from_insights(insights: dict[str, object], rank: str) -> str:
+    ability_text = str(insights.get("ability_text") or "").strip()
+    for separator in (" 这轮最亮眼的是", " The strongest signals"):
+        if separator in ability_text:
+            ability_text = ability_text.split(separator, 1)[0].strip()
+            break
+    ability_text = ability_text.rstrip("。.")
+    return ability_text or PROFILE_LEVEL_SUMMARY.get(rank, "当前任务已经能稳定推进")
+
+
+def _list_of_strings(value: object) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item).strip() for item in value if str(item).strip()]
+
+
+def _strip_prefix(text: str) -> str:
+    cleaned = str(text or "").strip()
+    for prefix in ("起手习惯：", "推进习惯：", "容易掉点的地方："):
+        if cleaned.startswith(prefix):
+            return cleaned[len(prefix) :].strip()
+    return cleaned
+
+
+def _compose_profile_paragraph(display_name: str, rank: str, axis_map: dict[str, dict[str, object]]) -> str:
     framing = _axis_score(axis_map, "goal_framing") >= 2
     context = _axis_score(axis_map, "context_supply") >= 2
     execute = _axis_score(axis_map, "execution_preference") >= 2
     verify = _axis_score(axis_map, "verification_loop") >= 2
 
-    opening = f"当前大致处在 `{rank}`。"
+    opening = f"{display_name}，你的水平已经达到了{rank}级，{PROFILE_LEVEL_SUMMARY.get(rank, '当前任务已经能稳定推进')}，落实代码。"
     if framing and context and execute and verify:
         return (
             f"{opening} 你和 AI 对话时，起手就像在写一条可执行的 prompt："
@@ -678,6 +917,8 @@ def compress_message_text(text: str, *, role: str, compression_mode: str = "firs
     cleaned = re.sub(r"```[\s\S]*?```", " [代码块略] ", cleaned)
     if not cleaned:
         return ""
+    if role == "user":
+        return cleaned
     if compression_mode == "first_two_sentences":
         return _first_two_sentences(cleaned)
     if compression_mode == "assistant_brief" and role == "assistant":
@@ -686,23 +927,13 @@ def compress_message_text(text: str, *, role: str, compression_mode: str = "firs
 
 
 def _first_two_sentences(text: str) -> str:
-    sentences = [item.strip() for item in re.split(r"(?<=[。！？.!?])\s+", text) if item.strip()]
+    sentences = [item.strip() for item in re.split(r"(?<=[。！？.!?])", text) if item.strip()]
     if not sentences:
         return text[:180]
     return " ".join(sentences[:2])[:180]
 
 
 def _assistant_brief(text: str) -> str:
-    sentences = [item.strip() for item in re.split(r"(?<=[。！？.!?])\s+", text) if item.strip()]
-    priority: list[str] = []
-    for sentence in sentences:
-        lowered = sentence.lower()
-        if any(token in lowered for token in ["先", "已", "完成", "验证", "测试", "read", "run", "build", "test", "verify", "changed", "updated"]):
-            priority.append(sentence)
-        if len(" ".join(priority)) >= 160:
-            break
-    if priority:
-        return " ".join(priority[:2])[:180]
     return _first_two_sentences(text)
 
 

@@ -62,7 +62,12 @@ def analyze_with_chunking(transcript: Transcript) -> DistilledRun:
 
     chunk_transcripts = _pack_distilled_transcripts([distilled])
     chunk_analyses = [analyze_transcript(chunk) for chunk in chunk_transcripts if chunk.messages]
-    aggregate = aggregate_analyses(chunk_analyses, min_messages=1)
+    aggregate = aggregate_analyses(
+        chunk_analyses,
+        min_messages=1,
+        total_tool_calls_override=transcript.tool_calls,
+        token_usage_override=transcript.token_usage,
+    )
     aggregate["distillation"] = _distillation_metadata([distilled], chunk_transcripts, min_messages=1)
     _rewrite_chunked_aggregate(aggregate)
     return DistilledRun(kind="aggregate", aggregate=aggregate, analyses=chunk_analyses)
@@ -83,7 +88,12 @@ def analyze_many_with_chunking(transcripts: list[Transcript], min_messages: int 
     chunk_analyses = [analyze_transcript(chunk) for chunk in chunk_transcripts if len(chunk.messages) >= min_messages]
     if not chunk_analyses:
         chunk_analyses = [analyze_transcript(chunk) for chunk in chunk_transcripts if chunk.messages]
-    aggregate = aggregate_analyses(chunk_analyses, min_messages=1)
+    aggregate = aggregate_analyses(
+        chunk_analyses,
+        min_messages=1,
+        total_tool_calls_override=sum(item.tool_calls for item in distilled_transcripts),
+        token_usage_override=_sum_token_usage(item.token_usage for item in distilled_transcripts),
+    )
     aggregate["distillation"] = _distillation_metadata(distilled_transcripts, chunk_transcripts, min_messages=min_messages)
     _rewrite_chunked_aggregate(aggregate)
     return DistilledRun(kind="aggregate", aggregate=aggregate, analyses=chunk_analyses)
@@ -112,7 +122,7 @@ def _distill_transcript(transcript: Transcript) -> DistilledTranscript:
             role=message.role,
             text=distilled_text,
             timestamp=message.timestamp,
-            meta=dict(message.meta),
+            meta={**dict(message.meta), "signal_text": message.text},
         )
         messages.append(distilled_message)
         distilled_units += _text_units(distilled_text)
@@ -173,13 +183,6 @@ def _pack_distilled_transcripts(distilled_transcripts: list[DistilledTranscript]
     if current:
         prepared_chunks.append(current)
 
-    weights = [sum(units for _, units in chunk) for chunk in prepared_chunks]
-    total_tool_calls = sum(item.tool_calls for item in distilled_transcripts)
-    total_raw_events = sum(item.raw_event_count for item in distilled_transcripts)
-    total_tokens = _sum_token_usage(item.token_usage for item in distilled_transcripts)
-    tool_allocations = _allocate_integer_budget(total_tool_calls, weights)
-    raw_event_allocations = _allocate_integer_budget(total_raw_events, weights)
-    token_allocations = _allocate_token_usage(total_tokens, weights)
     models = _merge_unique(term for item in distilled_transcripts for term in item.models)
     providers = _merge_unique(term for item in distilled_transcripts for term in item.providers)
     display_name = next((item.display_name for item in distilled_transcripts if item.display_name), None)
@@ -193,11 +196,11 @@ def _pack_distilled_transcripts(distilled_transcripts: list[DistilledTranscript]
                 source=source,
                 path=path,
                 messages=[message for message, _ in chunk],
-                tool_calls=tool_allocations[index],
-                raw_event_count=max(len(chunk), raw_event_allocations[index]),
+                tool_calls=0,
+                raw_event_count=len(chunk),
                 models=models,
                 providers=providers,
-                token_usage=token_allocations[index],
+                token_usage=TokenUsage(),
                 display_name=display_name,
             )
         )
@@ -228,7 +231,9 @@ def _distillation_metadata(
         "raw_units": raw_units,
         "distilled_units": distilled_units,
         "compression_ratio": round(distilled_units / raw_units, 3) if raw_units else 1.0,
-        "strategy": "保留用户 prompt 原文，强压缩 AI 回复，按用户回合拼块，把多个 session 填满窗口后先产出局部报告，再汇总成总报告。",
+        "original_tool_calls": sum(item.tool_calls for item in distilled_transcripts),
+        "original_total_tokens": sum(item.token_usage.total_tokens for item in distilled_transcripts),
+        "strategy": "保留用户 prompt 原文，AI 回复只做取头压缩；chunk 级不再伪造 tool_call 和 token 证据，只在总报告层回收原始统计。",
     }
 
 
@@ -237,30 +242,15 @@ def _compress_assistant_text(text: str) -> str:
     cleaned = re.sub(r"```[\s\S]*?```", " [代码块略] ", cleaned)
     cleaned = re.sub(r"`([^`]+)`", r" \1 ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
-    if len(cleaned) <= 72:
+    sentences = [item.strip() for item in re.split(r"(?<=[。！？.!?])", cleaned) if item.strip()]
+    if len(cleaned) <= 72 and len(sentences) <= 2:
         return cleaned
-
-    sentences = [item.strip() for item in re.split(r"(?<=[。！？.!?])\s+|\n+", cleaned) if item.strip()]
-    selected: list[str] = []
-    for sentence in sentences:
-        lowered = sentence.lower()
-        if any(token in lowered for token in ASSISTANT_PRIORITY_TOKENS):
-            selected.append(sentence)
-        if len(" ".join(selected)) >= ASSISTANT_REPLY_MAX_CHARS:
-            break
-
-    if not selected and sentences:
-        selected = sentences[:1] if len(cleaned) <= ASSISTANT_REPLY_MAX_CHARS else sentences[:2]
-    if not selected:
-        selected = [cleaned[:ASSISTANT_REPLY_MAX_CHARS]]
-
-    commands = re.findall(r"\b(?:python3?|pytest|uv|npm|pnpm|yarn|npx|git|rg|sed|cat|ls|make|node)\b[^\n]{0,80}", cleaned)
-    if commands:
-        selected.append(f"命令重点：{commands[0].strip()}")
-
-    compressed = " ".join(selected).strip()
+    if sentences:
+        compressed = " ".join(sentences[:2]).strip()
+    else:
+        compressed = cleaned[:ASSISTANT_REPLY_MAX_CHARS]
     compressed = re.sub(r"\s+", " ", compressed).strip()
-    if len(cleaned) <= ASSISTANT_REPLY_MAX_CHARS and len(compressed) >= len(cleaned) * 0.9:
+    if len(sentences) <= 2 and len(cleaned) <= ASSISTANT_REPLY_MAX_CHARS:
         return cleaned
     if len(compressed) > ASSISTANT_REPLY_MAX_CHARS:
         compressed = compressed[: ASSISTANT_REPLY_MAX_CHARS - 1].rstrip() + "…"

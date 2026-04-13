@@ -222,7 +222,13 @@ def compare_analyses(before: Analysis, after: Analysis) -> dict[str, object]:
     }
 
 
-def aggregate_analyses(analyses: list[Analysis], min_messages: int = 8) -> dict[str, object]:
+def aggregate_analyses(
+    analyses: list[Analysis],
+    min_messages: int = 8,
+    *,
+    total_tool_calls_override: int | None = None,
+    token_usage_override=None,
+) -> dict[str, object]:
     if not analyses:
         raise ValueError("No analyses to aggregate.")
 
@@ -230,12 +236,19 @@ def aggregate_analyses(analyses: list[Analysis], min_messages: int = 8) -> dict[
     pool = eligible or analyses
     dropped = len(analyses) - len(pool)
     total_messages = sum(len(item.transcript.messages) for item in pool)
-    total_tool_calls = sum(item.transcript.tool_calls for item in pool)
-    total_tokens = sum(item.transcript.token_usage.total_tokens for item in pool)
-    total_input_tokens = sum(item.transcript.token_usage.input_tokens for item in pool)
-    total_cached_input_tokens = sum(item.transcript.token_usage.cached_input_tokens for item in pool)
-    total_output_tokens = sum(item.transcript.token_usage.output_tokens for item in pool)
-    total_reasoning_output_tokens = sum(item.transcript.token_usage.reasoning_output_tokens for item in pool)
+    total_tool_calls = total_tool_calls_override if total_tool_calls_override is not None else sum(item.transcript.tool_calls for item in pool)
+    if token_usage_override is None:
+        total_tokens = sum(item.transcript.token_usage.total_tokens for item in pool)
+        total_input_tokens = sum(item.transcript.token_usage.input_tokens for item in pool)
+        total_cached_input_tokens = sum(item.transcript.token_usage.cached_input_tokens for item in pool)
+        total_output_tokens = sum(item.transcript.token_usage.output_tokens for item in pool)
+        total_reasoning_output_tokens = sum(item.transcript.token_usage.reasoning_output_tokens for item in pool)
+    else:
+        total_tokens = int(getattr(token_usage_override, "total_tokens", 0) or 0)
+        total_input_tokens = int(getattr(token_usage_override, "input_tokens", 0) or 0)
+        total_cached_input_tokens = int(getattr(token_usage_override, "cached_input_tokens", 0) or 0)
+        total_output_tokens = int(getattr(token_usage_override, "output_tokens", 0) or 0)
+        total_reasoning_output_tokens = int(getattr(token_usage_override, "reasoning_output_tokens", 0) or 0)
 
     user_metrics = _aggregate_metric_scores([item.user_metrics for item in pool])
     assistant_metrics = _aggregate_metric_scores([item.assistant_metrics for item in pool])
@@ -473,35 +486,36 @@ def _count_messages_with_tokens(messages, tokens: list[str]) -> int:
     count = 0
     lowered_tokens = [token.lower() for token in tokens]
     for item in messages:
-        text = item.text.lower()
+        text = _signal_text(item).lower()
         if any(token in text for token in lowered_tokens):
             count += 1
     return count
 
 
 def _count_structured_messages(messages) -> int:
-    return sum(1 for item in messages if STRUCTURED_PATTERN.search(item.text))
+    return sum(1 for item in messages if STRUCTURED_PATTERN.search(_signal_text(item)))
 
 
 def _count_path_like_messages(messages) -> int:
-    return sum(1 for item in messages if PATH_LIKE_PATTERN.search(item.text))
+    return sum(1 for item in messages if PATH_LIKE_PATTERN.search(_signal_text(item)))
 
 
 def _count_command_like_messages(messages) -> int:
-    return sum(1 for item in messages if COMMAND_PATTERN.search(item.text))
+    return sum(1 for item in messages if COMMAND_PATTERN.search(_signal_text(item)))
 
 
 def _count_plan_hits(messages) -> int:
     hits = 0
     for item in messages:
-        text = item.text.lower()
+        signal_text = _signal_text(item)
+        text = signal_text.lower()
         if any(token in text for token in PLAN_TOKENS):
             hits += 1
             continue
-        if re.search(r"先.{0,30}再", item.text):
+        if re.search(r"先.{0,30}再", signal_text):
             hits += 1
             continue
-        if STRUCTURED_PATTERN.search(item.text) and any(token in text for token in ["目标", "约束", "输出", "验收"]):
+        if STRUCTURED_PATTERN.search(signal_text) and any(token in text for token in ["目标", "约束", "输出", "验收"]):
             hits += 1
     return hits
 
@@ -687,15 +701,25 @@ def _score_recovery(user_messages, assistant_messages, signals: dict[str, int] |
 def _collect_keywords(messages) -> set[str]:
     keywords: set[str] = set()
     for item in messages:
-        lowered = item.text.lower()
+        signal_text = _signal_text(item)
+        lowered = signal_text.lower()
         for token in ["readme", "skill", "repo", "git", "public", "证书", "日志", "解析", "用户", "ai", "协作", "等级", "agent", "workflow", "tool", "model", "token"]:
             if token in lowered:
                 keywords.add(token)
-        for match in ASCII_TERM_PATTERN.findall(item.text):
+        for match in ASCII_TERM_PATTERN.findall(signal_text):
             token = match.lower().strip("./")
             if len(token) >= 4 and ("/" in token or "." in token or token in {"codex", "claude", "cursor", "vscode", "opencode", "openclaw"}):
                 keywords.add(token)
     return keywords
+
+
+def _signal_text(message) -> str:
+    meta = getattr(message, "meta", None)
+    if isinstance(meta, dict):
+        value = meta.get("signal_text")
+        if isinstance(value, str) and value:
+            return value
+    return str(getattr(message, "text", "") or "")
 
 
 def _build_user_certificate(score: int, metrics: list[MetricScore], transcript: Transcript) -> Certificate:

@@ -45,8 +45,10 @@ Overall, this is already a strong way to drive AI work. The current strengths ar
 ## 1. What It Can Do
 
 - Read real collaboration logs.
+- Build a direct portrait first: use the raw trace to judge level, stage, strengths, and gaps.
 - Distill vibecoding ability across 16 dimensions:
   goal framing, context supply, constraint governance, communication compression, execution preference, task decomposition, tool orchestration, context carry, iteration repair, failure recovery, verification loop, deliverable packaging, handoff memory, abstraction reuse, autonomous push, workflow orchestration.
+- Build an indirect portrait second: keep the direct portrait as the primary truth source, then use the 16-dimension distillation to supply tags, summary-page copy, and share-bundle styling.
 - Judge level and stage, then generate a dedicated vibecoding capability profile.
 - Export a share bundle that turns your collaboration style into a capability others can share, showcase, and plug in immediately.
 - Load someone else's shared capability so AI can enter that working rhythm fast and keep the task moving in the same style.
@@ -94,10 +96,13 @@ curl -fsSL https://raw.githubusercontent.com/dangoZhang/vibecoding.skill/main/.c
 python3 -m pip install -e .
 ```
 
-- Log analysis, level judgment, profile, report, JSON, and share bundle: `macOS / Linux / Windows`
-- SVG share card: `macOS / Linux / Windows`
-- PNG share card: prefer `rsvg-convert`; fall back to the Python package `cairosvg` when that command is unavailable
-- Best typography fidelity comes with `SF Pro`; fallback stack is `PingFang SC / Helvetica Neue / Arial / sans-serif`
+- If you want to run the bundled test suite, install the test extra first:
+
+```bash
+python3 -m pip install -e ".[test]"
+python3 -m pytest -q
+```
+
 - Environment check:
 
 ```bash
@@ -125,6 +130,11 @@ Live response
 > - Fast progression. Once context is in place, AI starts acting directly.
 > - Result-oriented. The requests stay grounded in concrete outputs.
 > - Correction is still weaker, so `iteration repair` and `failure recovery` are the current gaps.
+
+Notes:
+
+- This "distill my profile" flow is the direct portrait. The main judgment comes from the raw trace.
+- The README hero panel and exported profile page are indirect portraits, but they now reconcile to the direct portrait first and only use the 16-dimension model as a supporting layer.
 
 ### 2. Share My Capability
 
