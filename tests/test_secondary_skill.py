@@ -156,37 +156,43 @@ class SecondarySkillDistillationTests(unittest.TestCase):
         concise_axis = {axis["id"]: axis for axis in concise["axes"]}["communication_compression"]
         self.assertLess(verbose_axis["score"], concise_axis["score"])
 
-    def test_panel_prefers_direct_insights_when_payload_is_available(self) -> None:
+    def test_panel_ignores_stale_insights_and_uses_secondary_summary(self) -> None:
         payload = {
             "display_name": "码奸",
             "insights": {
-                "rank": "L4",
-                "ability_text": "你已经能把常见任务沿着上下文稳定推到多步完成。 这轮最亮眼的是上下文铺垫。",
+                "rank": "L9",
+                "ability_text": "这是一段故意过时的兼容字段，不应再进入 README 画像。",
                 "habit_profile_lines": [
-                    "起手习惯：你通常会先抓住“上下文铺垫”，路径、背景和边界给得够，AI 更容易直接落地。",
-                    "推进习惯：AI 侧最像你的地方是“执行推进”，能先动手，再汇报，推进感比较强。",
-                    "容易掉点的地方：你这边的“迭代修正”和 AI 侧的“补救适配”还不够稳。",
+                    "起手习惯：这段旧文案不应再被读取。",
+                    "推进习惯：这段旧文案也不应再被读取。",
+                    "容易掉点的地方：这段旧文案也不应再被读取。",
                 ],
-                "breakthrough_lines": ["下一步最该补的是偏了之后的修正速度。"],
+                "breakthrough_lines": ["这条旧建议不应进入画像。"],
             },
             "secondary_skill": {
                 "display_name": "码奸",
                 "rank": "L4",
                 "axes": [
-                    {"id": "goal_framing", "score": 4},
-                    {"id": "context_supply", "score": 4},
-                    {"id": "verification_loop", "score": 4},
-                    {"id": "tool_orchestration", "score": 4},
+                    {"id": "goal_framing", "label": "目标 framing", "score": 4, "summary": "起手偏好先说清目标、边界和验收，再让 agent 接手执行。"},
+                    {"id": "context_supply", "label": "上下文供给", "score": 4, "summary": "偏好把路径、文件、背景和历史直接交给 agent，减少来回确认。"},
+                    {"id": "execution_preference", "label": "执行默认", "score": 4, "summary": "更偏好直接动手、直接出结果，解释不要挡在执行前面。"},
+                    {"id": "tool_orchestration", "label": "工具编排", "score": 4, "summary": "倾向让 agent 读文件、跑命令、查日志、落脚本，而不是停在口头判断。"},
+                    {"id": "verification_loop", "label": "验证闭环", "score": 4, "summary": "默认要可验证结果，最好顺带交代验证方式和未验证项。"},
+                    {"id": "abstraction_reuse", "label": "抽象复用", "score": 0, "summary": "当前记录里，抽象复用信号还不够明确。"},
+                    {"id": "constraint_governance", "label": "约束治理", "score": 0, "summary": "当前记录里，约束治理信号还不够明确。"},
                 ],
             },
         }
 
         panel = build_readme_profile_panel(payload)
-        self.assertIn("你已经能把常见任务沿着上下文稳定推到多步完成", panel["paragraphs"][0])
-        self.assertIn("能先动手，再汇报", panel["paragraphs"][1])
-        self.assertIn("下一步最该补的是偏了之后的修正速度", panel["paragraphs"][2])
+        self.assertIn("码奸，你的水平已经达到了L4级", panel["paragraphs"][0])
+        self.assertIn("目标 framing", panel["paragraphs"][0])
+        self.assertIn("执行默认", panel["paragraphs"][1])
+        self.assertIn("抽象复用", panel["paragraphs"][2])
+        self.assertNotIn("过时的兼容字段", "\n".join(panel["paragraphs"]))
+        self.assertNotIn("旧建议", "\n".join(panel["paragraphs"]))
 
-    def test_panel_uses_report_derived_tags_and_bullets(self) -> None:
+    def test_panel_uses_secondary_summary_tags_and_bullets(self) -> None:
         payload = {
             "display_name": "码奸",
             "insights": {
@@ -198,8 +204,6 @@ class SecondarySkillDistillationTests(unittest.TestCase):
                     "容易掉点的地方：当前最该补的是“交接与记忆”，当前记录里，交接与记忆信号还不够稳定。",
                 ],
                 "breakthrough_lines": ["下一轮先补交接与记忆。"],
-                "profile_tags": ["报告派生标签"],
-                "profile_bullets": ["报告派生要点。"],
             },
             "secondary_skill": {
                 "display_name": "码奸",
@@ -214,8 +218,9 @@ class SecondarySkillDistillationTests(unittest.TestCase):
         }
 
         panel = build_readme_profile_panel(payload)
-        self.assertEqual(panel["tags"], ["报告派生标签"])
-        self.assertEqual(panel["bullets"], ["报告派生要点。"])
+        self.assertIn("目标先收束", panel["tags"])
+        self.assertIn("上下文给够", panel["tags"])
+        self.assertTrue(any("最稳" in item for item in panel["bullets"]))
 
     def test_insights_can_be_derived_from_secondary_skill_summary(self) -> None:
         transcript = Transcript(

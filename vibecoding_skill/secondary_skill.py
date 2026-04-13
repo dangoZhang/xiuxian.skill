@@ -238,6 +238,49 @@ CLOSURE_AXIS_ORDER = [
     "handoff_memory",
     "abstraction_reuse",
 ]
+SUMMARY_AXIS_PRIORITY = [
+    "goal_framing",
+    "context_supply",
+    "execution_preference",
+    "tool_orchestration",
+    "verification_loop",
+    "deliverable_packaging",
+    "task_decomposition",
+    "iteration_repair",
+    "handoff_memory",
+    "abstraction_reuse",
+    "autonomous_push",
+    "workflow_orchestration",
+    "constraint_governance",
+    "communication_compression",
+    "context_carry",
+    "failure_recovery",
+]
+
+USER_PRIMARY_AXIS_IDS = {
+    "goal_framing",
+    "context_supply",
+    "constraint_governance",
+    "communication_compression",
+    "execution_preference",
+}
+
+OBSERVED_PRIMARY_AXIS_IDS = {
+    "tool_orchestration",
+    "verification_loop",
+    "deliverable_packaging",
+    "handoff_memory",
+    "abstraction_reuse",
+    "autonomous_push",
+    "workflow_orchestration",
+}
+
+HYBRID_AXIS_IDS = {
+    "task_decomposition",
+    "context_carry",
+    "iteration_repair",
+    "failure_recovery",
+}
 
 AXIS_PATTERNS = {
     "goal_framing": [r"目标", r"边界", r"验收", r"输出物?", r"结果", r"起手", r"先.*?(确认|说清|整理)", r"帮我.*总结"],
@@ -302,33 +345,42 @@ def build_secondary_skill_distillation(
     messages: list[Message],
     display_name: str,
     source: str,
-    rank: str,
+    rank: str | None,
     generated_at: str,
     models: list[str] | None = None,
     compression_mode: str = "first_two_sentences",
+    tool_calls: int = 0,
 ) -> dict[str, object]:
     compressed = [_compress_message(message, compression_mode=compression_mode) for message in messages if message.text.strip()]
     result_skill_name = result_skill_slug(display_name)
     result_skill_title = result_skill_title_from_display(display_name)
     axis_matches = _precompute_axis_matches(compressed)
     axes = [
-        _build_axis(field, compressed, total_count=len(compressed), axis_matches=axis_matches)
+        _build_axis(
+            field,
+            compressed,
+            total_count=len(compressed),
+            axis_matches=axis_matches,
+            tool_calls=tool_calls,
+        )
         for field in SECONDARY_SKILL_FIELDS
     ]
+    inferred_rank = _infer_rank_from_axes(axes)
     top_user_examples = [item["compressed"] for item in compressed if item["role"] == "user"][:8]
     top_assistant_examples = [item["compressed"] for item in compressed if item["role"] == "assistant"][:8]
-    return {
+    result = {
         "version": 2,
         "display_name": display_name,
         "result_skill_name": result_skill_name,
         "result_skill_title": result_skill_title,
         "source": source,
-        "rank": rank,
+        "rank": inferred_rank,
         "generated_at": generated_at,
         "compression_mode": compression_mode,
         "message_count": len(messages),
         "user_message_count": sum(1 for item in compressed if item["role"] == "user"),
         "assistant_message_count": sum(1 for item in compressed if item["role"] == "assistant"),
+        "tool_calls": tool_calls,
         "models": models or [],
         "fields": SECONDARY_SKILL_FIELDS,
         "axes": axes,
@@ -342,6 +394,13 @@ def build_secondary_skill_distillation(
             "prompt_examples": _build_prompt_examples(display_name),
         },
     }
+    summary = summarize_secondary_skill(result)
+    result["summary"] = summary
+    result["truth_source"] = "16维蒸馏是唯一真相源；报告、README、导出包都只从这份结构化结果派生。"
+    result["llm_prompts"] = {
+        "report_synthesis": _build_report_llm_prompt(result, summary, rank_hint=rank),
+    }
+    return result
 
 
 def render_secondary_skill_markdown(distillation: dict[str, object]) -> str:
@@ -413,44 +472,57 @@ def render_secondary_skill_markdown(distillation: dict[str, object]) -> str:
         lines.extend(["", "## Good Prompts", ""])
         for item in contract.get("prompt_examples", []):
             lines.append(f"- {item}")
+    llm_prompts = distillation.get("llm_prompts", {})
+    if isinstance(llm_prompts, dict) and llm_prompts.get("report_synthesis"):
+        lines.extend(
+            [
+                "",
+                "## LLM 综合",
+                "",
+                "- `llm_prompts.report_synthesis`：给大模型做二次综合时使用，输入仍然只允许引用这份 16 维蒸馏结果。",
+            ]
+        )
     return "\n".join(lines).strip() + "\n"
 
 
 def build_readme_profile_panel(source: dict[str, object]) -> dict[str, object]:
-    insights, distillation = _panel_sources(source)
+    distillation = _panel_source(source)
+    summary = summarize_secondary_skill(distillation)
     axes = distillation.get("axes") if isinstance(distillation, dict) else []
     if not isinstance(axes, list):
         axes = []
     axis_map = {axis.get("id"): axis for axis in axes if isinstance(axis, dict) and axis.get("id")}
-    rank = str((insights or {}).get("rank") or distillation.get("rank") or "L1")
+    rank = str(summary.get("rank") or distillation.get("rank") or "L1")
     display_name = str(
         source.get("display_name")
         or _dict_get(_dict_get(source, "transcript"), "display_name")
         or distillation.get("display_name")
         or "你"
     )
-    facts = _build_profile_facts(display_name, rank, axis_map, insights=insights)
-    insight_tags = _list_of_strings((insights or {}).get("profile_tags"))
-    insight_bullets = _list_of_strings((insights or {}).get("profile_bullets"))
+    facts = _build_profile_facts(display_name, rank, axis_map, summary=summary)
 
     panel = {
         "title": "你怎么和 AI 协作",
         "display_name": display_name,
         "rank": rank,
-        "tags": insight_tags or _readme_tags(axis_map),
+        "tags": _list_of_strings(summary.get("tags")),
         "facts": facts,
         "paragraphs": _render_profile_paragraphs(facts),
-        "bullets": insight_bullets or _readme_bullets(axis_map),
+        "bullets": _list_of_strings(summary.get("bullets")),
     }
     panel["llm_prompt"] = _build_profile_llm_prompt(panel)
     return panel
 
 
 def summarize_secondary_skill(distillation: dict[str, object]) -> dict[str, object]:
+    cached = distillation.get("summary") if isinstance(distillation, dict) else None
+    if isinstance(cached, dict):
+        return cached
     axes = distillation.get("axes") if isinstance(distillation, dict) else []
     if not isinstance(axes, list):
         axes = []
     axis_map = {axis.get("id"): axis for axis in axes if isinstance(axis, dict) and axis.get("id")}
+    rank = str(distillation.get("rank") or _infer_rank_from_axes(list(axis_map.values())) or "L1")
     opening_axis = _pick_axis(axis_map, OPENING_AXIS_ORDER)
     execution_axis = _pick_axis(axis_map, EXECUTION_AXIS_ORDER)
     closure_axis = _pick_axis(axis_map, CLOSURE_AXIS_ORDER)
@@ -466,25 +538,41 @@ def summarize_secondary_skill(distillation: dict[str, object]) -> dict[str, obje
         _mimic_risk_line(weak_axes[:2]),
     ]
     report_basis_lines = [
-        "主判断链路：先做 16 维蒸馏，再由蒸馏结果生成报告，最后由报告派生 README / 导出包画像。",
-        "长历史样本会保留用户 prompt 原文，AI 回复只做取头压缩；tool、token 和验证证据只在总报告层回收。",
+        "主判断链路：16 维蒸馏是唯一真相源，报告、README、导出包都只复用这份结构化结果。",
+        "语义上会区分用户要求、已观察行为和工具遥测，不再把“要求过”直接当成“已经做到”。",
+        "长历史样本会保留用户 prompt 原文，AI 回复只做取头压缩；tool 和验证证据优先回收到实际落地维度。",
     ]
     dimension_summary_lines = []
     if top_axes:
         dimension_summary_lines.append(
-            f"16 维里最稳的是“{top_axes[0]['label']}”"
-            + (f"，其次是“{top_axes[1]['label']}”" if len(top_axes) > 1 else "")
+            f"16 维里最稳的是“{top_axes[0].get('label', top_axes[0].get('id', '维度'))}”"
+            + (
+                f"，其次是“{top_axes[1].get('label', top_axes[1].get('id', '维度'))}”"
+                if len(top_axes) > 1
+                else ""
+            )
             + "。"
         )
     if weak_axes:
         dimension_summary_lines.append(
-            f"当前最该补的是“{weak_axes[0]['label']}”"
-            + (f" 和 “{weak_axes[1]['label']}”" if len(weak_axes) > 1 else "")
+            f"当前最该补的是“{weak_axes[0].get('label', weak_axes[0].get('id', '维度'))}”"
+            + (
+                f" 和 “{weak_axes[1].get('label', weak_axes[1].get('id', '维度'))}”"
+                if len(weak_axes) > 1
+                else ""
+            )
             + "。"
         )
+    user_top_axes = _sorted_role_axes(axis_map, role_family="user")
+    assistant_top_axes = _sorted_role_axes(axis_map, role_family="assistant")
+    user_summary_lines = _build_user_summary_lines(user_top_axes, weak_axes)
+    assistant_summary_lines = _build_assistant_summary_lines(assistant_top_axes, weak_axes)
+    breakthrough_lines = _build_breakthrough_lines(rank, weak_axes)
+    profile_bullets = _build_profile_bullets(axis_map, top_axes, weak_axes)
     return {
+        "rank": rank,
         "tags": _readme_tags(axis_map),
-        "bullets": _readme_bullets(axis_map),
+        "bullets": profile_bullets,
         "top_axes": top_axes[:4],
         "weak_axes": weak_axes[:4],
         "opening_axis": opening_axis,
@@ -494,17 +582,19 @@ def summarize_secondary_skill(distillation: dict[str, object]) -> dict[str, obje
         "mimic_lines": [line for line in mimic_lines if line],
         "report_basis_lines": report_basis_lines,
         "dimension_summary_lines": dimension_summary_lines,
+        "user_summary_lines": user_summary_lines,
+        "assistant_summary_lines": assistant_summary_lines,
+        "breakthrough_lines": breakthrough_lines,
     }
 
 
-def _panel_sources(source: dict[str, object]) -> tuple[dict[str, object], dict[str, object]]:
+def _panel_source(source: dict[str, object]) -> dict[str, object]:
     if not isinstance(source, dict):
-        return {}, {}
-    insights = source.get("insights")
+        return {}
     secondary = source.get("secondary_skill")
     if isinstance(secondary, dict):
-        return (insights if isinstance(insights, dict) else {}), secondary
-    return {}, source
+        return secondary
+    return source
 
 
 def _dict_get(source: object, key: str) -> object:
@@ -524,8 +614,8 @@ def _pick_axis(axis_map: dict[str, dict[str, object]], axis_ids: list[str]) -> d
     candidates.sort(
         key=lambda axis: (
             -int(axis.get("score", 0) or 0),
-            -float(axis.get("weighted_evidence_count", 0.0) or 0.0),
             axis_ids.index(str(axis.get("id"))),
+            -float(axis.get("weighted_evidence_count", 0.0) or 0.0),
         )
     )
     return candidates[0]
@@ -536,6 +626,9 @@ def _sorted_axes(axis_map: dict[str, dict[str, object]]) -> list[dict[str, objec
         [axis for axis in axis_map.values() if int(axis.get("score", 0) or 0) > 0],
         key=lambda axis: (
             -int(axis.get("score", 0) or 0),
+            SUMMARY_AXIS_PRIORITY.index(str(axis.get("id") or ""))
+            if str(axis.get("id") or "") in SUMMARY_AXIS_PRIORITY
+            else len(SUMMARY_AXIS_PRIORITY),
             -float(axis.get("weighted_evidence_count", 0.0) or 0.0),
             str(axis.get("id") or ""),
         ),
@@ -543,17 +636,16 @@ def _sorted_axes(axis_map: dict[str, dict[str, object]]) -> list[dict[str, objec
 
 
 def _sorted_weak_axes(axis_map: dict[str, dict[str, object]]) -> list[dict[str, object]]:
-    positive = [axis for axis in axis_map.values() if int(axis.get("score", 0) or 0) > 0]
-    if positive:
-        return sorted(
-            positive,
-            key=lambda axis: (
-                int(axis.get("score", 0) or 0),
-                float(axis.get("weighted_evidence_count", 0.0) or 0.0),
-                str(axis.get("id") or ""),
-            ),
-        )
-    return sorted(axis_map.values(), key=lambda axis: str(axis.get("id") or ""))
+    return sorted(
+        axis_map.values(),
+        key=lambda axis: (
+            0 if int(axis.get("score", 0) or 0) == 0 else 1,
+            int(axis.get("score", 0) or 0),
+            float(axis.get("observed_weighted_evidence", 0.0) or 0.0),
+            float(axis.get("weighted_evidence_count", 0.0) or 0.0),
+            str(axis.get("id") or ""),
+        ),
+    )
 
 
 def _habit_line(prefix: str, axis: dict[str, object] | None, fallback: str) -> str:
@@ -590,6 +682,79 @@ def _mimic_risk_line(axes: list[dict[str, object]]) -> str:
     )
 
 
+def _sorted_role_axes(axis_map: dict[str, dict[str, object]], *, role_family: str) -> list[dict[str, object]]:
+    if role_family == "user":
+        candidates = [axis for axis in axis_map.values() if str(axis.get("semantic_mode") or "") == "user_behavior"]
+    else:
+        candidates = [axis for axis in axis_map.values() if str(axis.get("semantic_mode") or "") != "user_behavior"]
+    return sorted(
+        [axis for axis in candidates if int(axis.get("score", 0) or 0) > 0],
+        key=lambda axis: (
+            -int(axis.get("score", 0) or 0),
+            SUMMARY_AXIS_PRIORITY.index(str(axis.get("id") or ""))
+            if str(axis.get("id") or "") in SUMMARY_AXIS_PRIORITY
+            else len(SUMMARY_AXIS_PRIORITY),
+            -float(axis.get("observed_weighted_evidence", 0.0) or 0.0),
+            -float(axis.get("requested_weighted_evidence", 0.0) or 0.0),
+            str(axis.get("id") or ""),
+        ),
+    )
+
+
+def _build_user_summary_lines(top_axes: list[dict[str, object]], weak_axes: list[dict[str, object]]) -> list[str]:
+    if not top_axes:
+        return []
+    lines = [
+        f"你这边最稳的是“{top_axes[0].get('label', top_axes[0].get('id', '维度'))}”，{top_axes[0].get('summary', '')}",
+    ]
+    if weak_axes:
+        lines.append(
+            f"你这边当前最该补的是“{weak_axes[0].get('label', weak_axes[0].get('id', '维度'))}”，{weak_axes[0].get('summary', '')}"
+        )
+    return lines
+
+
+def _build_assistant_summary_lines(top_axes: list[dict[str, object]], weak_axes: list[dict[str, object]]) -> list[str]:
+    if not top_axes:
+        return []
+    lines = [
+        f"AI 侧最稳的是“{top_axes[0].get('label', top_axes[0].get('id', '维度'))}”，{top_axes[0].get('summary', '')}",
+    ]
+    assistant_weak = next((axis for axis in weak_axes if str(axis.get("semantic_mode") or "") != "user_behavior"), None)
+    if assistant_weak:
+        lines.append(
+            f"AI 侧最该补的是“{assistant_weak.get('label', assistant_weak.get('id', '维度'))}”，{assistant_weak.get('summary', '')}"
+        )
+    return lines
+
+
+def _build_breakthrough_lines(rank: str, weak_axes: list[dict[str, object]]) -> list[str]:
+    if not weak_axes:
+        return ["下一轮先继续积累更长回合样本，再决定主练维度。"]
+    primary = weak_axes[0]
+    label = primary.get("label", primary.get("id", "维度"))
+    rank_number = int(re.sub(r"[^0-9]", "", str(rank)) or 0)
+    lines = [f"下一轮先补“{label}”，把最短板先拉到稳定可复用。"]
+    if rank_number <= 4:
+        lines.append("训练时优先做短回合闭环：收束目标、直接执行、拿验证结果。")
+    else:
+        lines.append("训练时优先把这块沉成固定打法，避免每轮重新想一遍。")
+    return lines
+
+
+def _build_profile_bullets(
+    axis_map: dict[str, dict[str, object]],
+    top_axes: list[dict[str, object]],
+    weak_axes: list[dict[str, object]],
+) -> list[str]:
+    lines = _readme_bullets(axis_map)
+    if top_axes:
+        lines.append(f"这轮最稳的是“{top_axes[0].get('label', top_axes[0].get('id', '维度'))}”。")
+    if weak_axes:
+        lines.append(f"当前最该补的是“{weak_axes[0].get('label', weak_axes[0].get('id', '维度'))}”。")
+    return _dedupe(lines)[:4]
+
+
 def _precompute_axis_matches(compressed: list[dict[str, str]]) -> list[set[str]]:
     results: list[set[str]] = []
     for item in compressed:
@@ -609,6 +774,38 @@ def _weighted_evidence_count(matched_indexes: list[int], axis_matches: list[set[
         overlap = len(axis_matches[index]) if index < len(axis_matches) else 0
         total += 1.0 / max(overlap, 1) ** 0.5
     return total
+
+
+def _telemetry_weight(axis_id: str, tool_calls: int) -> float:
+    if tool_calls <= 0:
+        return 0.0
+    if axis_id == "tool_orchestration":
+        return min(2.2, tool_calls * 0.45)
+    if axis_id == "verification_loop":
+        return min(1.6, tool_calls * 0.28)
+    return 0.0
+
+
+def _semantic_weighted_evidence(
+    axis_id: str,
+    *,
+    requested_weighted: float,
+    observed_weighted: float,
+    telemetry_weighted: float,
+) -> float:
+    if axis_id in USER_PRIMARY_AXIS_IDS:
+        return requested_weighted + observed_weighted * 0.2
+    if axis_id in OBSERVED_PRIMARY_AXIS_IDS:
+        return observed_weighted + telemetry_weighted + requested_weighted * 0.4
+    return observed_weighted * 0.85 + requested_weighted * 0.7 + telemetry_weighted
+
+
+def _semantic_mode(axis_id: str) -> str:
+    if axis_id in USER_PRIMARY_AXIS_IDS:
+        return "user_behavior"
+    if axis_id in OBSERVED_PRIMARY_AXIS_IDS:
+        return "observed_outcome"
+    return "hybrid"
 
 
 def _build_communication_axis(
@@ -664,21 +861,92 @@ def _score_communication_compression(user_messages: list[str]) -> tuple[int, int
         return 2, avg_length
     return 1, avg_length
 
+
+def _infer_rank_from_axes(axes: list[dict[str, object]]) -> str:
+    if not axes:
+        return "L1"
+    weighted_total = sum(float(axis.get("weight", 1.0) or 1.0) * int(axis.get("score", 0) or 0) for axis in axes)
+    total_weight = sum(float(axis.get("weight", 1.0) or 1.0) for axis in axes) or 1.0
+    weighted_average = weighted_total / total_weight
+    if weighted_average < 0.45:
+        base_rank = 1
+    elif weighted_average < 0.8:
+        base_rank = 2
+    elif weighted_average < 1.1:
+        base_rank = 3
+    elif weighted_average < 1.45:
+        base_rank = 4
+    elif weighted_average < 1.8:
+        base_rank = 5
+    elif weighted_average < 2.15:
+        base_rank = 6
+    elif weighted_average < 2.5:
+        base_rank = 7
+    elif weighted_average < 2.85:
+        base_rank = 8
+    elif weighted_average < 3.2:
+        base_rank = 9
+    else:
+        base_rank = 10
+
+    axis_map = {str(axis.get("id")): axis for axis in axes if axis.get("id")}
+    cap = 10
+    if _axis_score(axis_map, "goal_framing") < 2 or _axis_score(axis_map, "context_supply") < 2:
+        cap = min(cap, 3)
+    if _axis_score(axis_map, "execution_preference") < 2 or _axis_score(axis_map, "tool_orchestration") < 2:
+        cap = min(cap, 4)
+    if _axis_score(axis_map, "task_decomposition") < 2 or _axis_score(axis_map, "iteration_repair") < 2:
+        cap = min(cap, 4)
+    if _axis_score(axis_map, "verification_loop") < 2:
+        cap = min(cap, 5)
+    if _axis_score(axis_map, "handoff_memory") < 2 or _axis_score(axis_map, "abstraction_reuse") < 2:
+        cap = min(cap, 4)
+    if _axis_score(axis_map, "autonomous_push") < 2:
+        cap = min(cap, 5)
+    if _axis_score(axis_map, "workflow_orchestration") < 2:
+        cap = min(cap, 6)
+    final_rank = max(1, min(base_rank, cap))
+    return f"L{final_rank}"
+
 def _build_axis(
     field: dict[str, object],
     compressed: list[dict[str, str]],
     *,
     total_count: int,
     axis_matches: list[set[str]],
+    tool_calls: int,
 ) -> dict[str, object]:
     axis_id = str(field["id"])
     if axis_id == "communication_compression":
         return _build_communication_axis(field, compressed, total_count=total_count)
-    matched = [item for item in compressed if _message_matches_axis(item["compressed"], axis_id)]
-    matched_indexes = [index for index, item in enumerate(compressed) if _message_matches_axis(item["compressed"], axis_id)]
+    matched_with_index = [
+        (index, item)
+        for index, item in enumerate(compressed)
+        if _message_matches_axis(item["compressed"], axis_id)
+    ]
+    matched = [item for _, item in matched_with_index]
+    matched_indexes = [index for index, _ in matched_with_index]
+    user_indexes = [index for index, item in matched_with_index if item["role"] == "user"]
+    assistant_indexes = [index for index, item in matched_with_index if item["role"] == "assistant"]
     role_counter = Counter(item["role"] for item in matched)
-    weighted_evidence = _weighted_evidence_count(matched_indexes, axis_matches)
-    score = _score_axis(matched, total_count=total_count, weighted_evidence=weighted_evidence)
+    requested_weighted = _weighted_evidence_count(user_indexes, axis_matches)
+    observed_weighted = _weighted_evidence_count(assistant_indexes, axis_matches)
+    telemetry_weighted = _telemetry_weight(axis_id, tool_calls)
+    weighted_evidence = _semantic_weighted_evidence(
+        axis_id,
+        requested_weighted=requested_weighted,
+        observed_weighted=observed_weighted,
+        telemetry_weighted=telemetry_weighted,
+    )
+    score = _score_axis(
+        axis_id,
+        matched,
+        total_count=total_count,
+        weighted_evidence=weighted_evidence,
+        requested_weighted=requested_weighted,
+        observed_weighted=observed_weighted,
+        telemetry_weighted=telemetry_weighted,
+    )
     coverage_ratio = round(weighted_evidence / max(total_count, 1), 4)
     return {
         "id": axis_id,
@@ -689,12 +957,31 @@ def _build_axis(
         "anchors": field["anchors"],
         "score": score,
         "coverage_ratio": coverage_ratio,
-        "confidence": _confidence(matched, weighted_evidence=weighted_evidence),
-        "summary": _summarize_axis(axis_id, matched, score),
+        "confidence": _confidence(
+            matched,
+            weighted_evidence=weighted_evidence,
+            observed_weighted=observed_weighted,
+            telemetry_weighted=telemetry_weighted,
+        ),
+        "summary": _summarize_axis(
+            axis_id,
+            matched,
+            score,
+            requested_weighted=requested_weighted,
+            observed_weighted=observed_weighted,
+            telemetry_weighted=telemetry_weighted,
+        ),
         "evidence_count": len(matched),
         "weighted_evidence_count": round(weighted_evidence, 3),
         "user_evidence_count": role_counter.get("user", 0),
         "assistant_evidence_count": role_counter.get("assistant", 0),
+        "requested_evidence_count": role_counter.get("user", 0),
+        "observed_evidence_count": role_counter.get("assistant", 0),
+        "requested_weighted_evidence": round(requested_weighted, 3),
+        "observed_weighted_evidence": round(observed_weighted + telemetry_weighted, 3),
+        "telemetry_evidence_count": min(tool_calls, 4) if telemetry_weighted > 0 else 0,
+        "telemetry_weighted_evidence": round(telemetry_weighted, 3),
+        "semantic_mode": _semantic_mode(axis_id),
         "examples": [item["compressed"] for item in matched[:4]],
     }
 
@@ -723,7 +1010,16 @@ def _build_layer_scores(axes: list[dict[str, object]]) -> list[dict[str, object]
     return results
 
 
-def _score_axis(matched: list[dict[str, str]], *, total_count: int, weighted_evidence: float) -> int:
+def _score_axis(
+    axis_id: str,
+    matched: list[dict[str, str]],
+    *,
+    total_count: int,
+    weighted_evidence: float,
+    requested_weighted: float,
+    observed_weighted: float,
+    telemetry_weighted: float,
+) -> int:
     if weighted_evidence <= 0:
         return 0
     count = len(matched)
@@ -749,22 +1045,49 @@ def _score_axis(matched: list[dict[str, str]], *, total_count: int, weighted_evi
     role_count = len({item["role"] for item in matched})
     if count >= 3 and role_count == 2 and score < 4:
         score += 1
+    if axis_id in OBSERVED_PRIMARY_AXIS_IDS:
+        if observed_weighted + telemetry_weighted <= 0:
+            score = min(score, 2)
+        elif observed_weighted + telemetry_weighted < requested_weighted and score > 3:
+            score = 3
+    if axis_id in USER_PRIMARY_AXIS_IDS and requested_weighted <= 0:
+        score = min(score, 1)
     return min(score, 4)
 
 
-def _confidence(matched: list[dict[str, str]], *, weighted_evidence: float) -> float:
+def _confidence(
+    matched: list[dict[str, str]],
+    *,
+    weighted_evidence: float,
+    observed_weighted: float,
+    telemetry_weighted: float,
+) -> float:
     count = len(matched)
     role_count = len({item["role"] for item in matched})
     if count == 0:
         return 0.25
-    confidence = 0.35 + min(0.45, weighted_evidence * 0.12) + (0.1 if role_count == 2 else 0.0)
+    observed_bonus = min(0.16, (observed_weighted + telemetry_weighted) * 0.08)
+    confidence = 0.33 + min(0.4, weighted_evidence * 0.1) + observed_bonus + (0.08 if role_count == 2 else 0.0)
     return round(min(confidence, 0.95), 2)
 
 
-def _summarize_axis(axis_id: str, matched: list[dict[str, str]], score: int) -> str:
+def _summarize_axis(
+    axis_id: str,
+    matched: list[dict[str, str]],
+    score: int,
+    *,
+    requested_weighted: float,
+    observed_weighted: float,
+    telemetry_weighted: float,
+) -> str:
     del matched
     if score <= 0:
         return INSUFFICIENT_SUMMARIES[axis_id]
+    observed_total = observed_weighted + telemetry_weighted
+    if axis_id in OBSERVED_PRIMARY_AXIS_IDS and observed_total <= 0 and requested_weighted > 0:
+        return "当前主要停留在要求层，已观察到的落地证据还弱。"
+    if axis_id in OBSERVED_PRIMARY_AXIS_IDS and requested_weighted > 0 and observed_total > 0:
+        return "不只是在要求这件事，真实记录里也已经出现了相对稳定的落地证据。"
     if score == 1:
         return f"已有初步信号，说明{_trim_tail(ACTIVE_SUMMARIES[axis_id])}。"
     return ACTIVE_SUMMARIES[axis_id]
@@ -825,18 +1148,13 @@ def _build_profile_facts(
     rank: str,
     axis_map: dict[str, dict[str, object]],
     *,
-    insights: dict[str, object] | None = None,
+    summary: dict[str, object] | None = None,
 ) -> dict[str, str]:
-    if insights:
-        return {
-            "opening": _compose_profile_paragraph_from_insights(display_name, rank, insights),
-            "workflow": _compose_workflow_paragraph_from_insights(insights, axis_map),
-            "impression": _compose_impression_paragraph_from_insights(insights, axis_map),
-        }
+    summary = summary or {}
     return {
-        "opening": _compose_profile_paragraph(display_name, rank, axis_map),
-        "workflow": _compose_workflow_paragraph(axis_map),
-        "impression": _compose_impression_paragraph(axis_map),
+        "opening": _compose_profile_paragraph(display_name, rank, axis_map, summary=summary),
+        "workflow": _compose_workflow_paragraph(axis_map, summary=summary),
+        "impression": _compose_impression_paragraph(axis_map, summary=summary),
     }
 
 
@@ -880,45 +1198,53 @@ def _build_profile_llm_prompt(panel: dict[str, object]) -> str:
     return "\n".join(prompt_lines)
 
 
-def _compose_profile_paragraph_from_insights(display_name: str, rank: str, insights: dict[str, object]) -> str:
-    claim = _primary_claim_from_insights(insights, rank)
-    habit_lines = _list_of_strings(insights.get("habit_profile_lines"))
-    if habit_lines:
-        return f"{display_name}，你的水平已经达到了{rank}级，{claim}。{_strip_prefix(habit_lines[0])}"
-    return f"{display_name}，你的水平已经达到了{rank}级，{claim}。"
-
-
-def _compose_workflow_paragraph_from_insights(
-    insights: dict[str, object],
-    axis_map: dict[str, dict[str, object]],
+def _build_report_llm_prompt(
+    distillation: dict[str, object],
+    summary: dict[str, object],
+    *,
+    rank_hint: str | None,
 ) -> str:
-    habit_lines = _list_of_strings(insights.get("habit_profile_lines"))
-    if len(habit_lines) >= 2:
-        return _strip_prefix(habit_lines[1])
-    return _compose_workflow_paragraph(axis_map)
-
-
-def _compose_impression_paragraph_from_insights(
-    insights: dict[str, object],
-    axis_map: dict[str, dict[str, object]],
-) -> str:
-    habit_lines = _list_of_strings(insights.get("habit_profile_lines"))
-    breakthrough_lines = _list_of_strings(insights.get("breakthrough_lines"))
-    if len(habit_lines) >= 3 and breakthrough_lines:
-        return f"{_strip_prefix(habit_lines[2])} {breakthrough_lines[0]}"
-    if len(habit_lines) >= 3:
-        return _strip_prefix(habit_lines[2])
-    return _compose_impression_paragraph(axis_map)
-
-
-def _primary_claim_from_insights(insights: dict[str, object], rank: str) -> str:
-    ability_text = str(insights.get("ability_text") or "").strip()
-    for separator in (" 这轮最亮眼的是", " The strongest signals"):
-        if separator in ability_text:
-            ability_text = ability_text.split(separator, 1)[0].strip()
-            break
-    ability_text = ability_text.rstrip("。.")
-    return ability_text or PROFILE_LEVEL_SUMMARY.get(rank, "当前任务已经能稳定推进")
+    axes = distillation.get("axes")
+    if not isinstance(axes, list):
+        axes = []
+    distilled_axes = []
+    for axis in axes[:16]:
+        if not isinstance(axis, dict):
+            continue
+        distilled_axes.append(
+            f"- {axis.get('label', axis.get('id', '维度'))}：score={axis.get('score', 0)}/4"
+            f"，mode={axis.get('semantic_mode', 'unknown')}"
+            f"，requested={axis.get('requested_weighted_evidence', 0)}"
+            f"，observed={axis.get('observed_weighted_evidence', 0)}"
+            f"，summary={axis.get('summary', '')}"
+        )
+    prompt_lines = [
+        "你是结构化蒸馏编辑器，要像 colleague.skill / ex-skill 里的 analyzer 一样，只基于证据生成结论。",
+        "要求：",
+        "- 16 维蒸馏是唯一真相源，不要引用外部等级或旧指标。",
+        "- 明确区分用户要求、已观察行为、工具遥测，不要把“要求过”写成“已经做到”。",
+        "- 先给等级和阶段，再给最稳的地方、最该补的地方、下一轮训练建议。",
+        "- 如果某维证据主要来自要求层，要明确写出“要求层信号强，落地证据弱”。",
+        "- 禁止发明结构化结果里没有的信息。",
+        "",
+        "结构化输入：",
+        f"- 用户：{distillation.get('display_name', '你')}",
+        f"- 最终等级：{summary.get('rank') or distillation.get('rank') or 'L1'}",
+        f"- 旧等级提示：{rank_hint or '无'}",
+        f"- 消息数：{distillation.get('message_count', 0)}",
+        f"- tool_calls：{distillation.get('tool_calls', 0)}",
+        f"- 维度摘要：{' '.join(_list_of_strings(summary.get('dimension_summary_lines')))}",
+        f"- 训练建议：{' '.join(_list_of_strings(summary.get('breakthrough_lines')))}",
+        "",
+        "16 维证据：",
+        *distilled_axes,
+        "",
+        "输出：",
+        "- 一段人话总结。",
+        "- 三条最关键观察。",
+        "- 两条下一轮训练动作。",
+    ]
+    return "\n".join(prompt_lines)
 
 
 def _list_of_strings(value: object) -> list[str]:
@@ -926,42 +1252,54 @@ def _list_of_strings(value: object) -> list[str]:
         return []
     return [str(item).strip() for item in value if str(item).strip()]
 
-
-def _strip_prefix(text: str) -> str:
-    cleaned = str(text or "").strip()
-    for prefix in ("起手习惯：", "推进习惯：", "容易掉点的地方："):
-        if cleaned.startswith(prefix):
-            return cleaned[len(prefix) :].strip()
-    return cleaned
-
-
-def _compose_profile_paragraph(display_name: str, rank: str, axis_map: dict[str, dict[str, object]]) -> str:
+def _compose_profile_paragraph(
+    display_name: str,
+    rank: str,
+    axis_map: dict[str, dict[str, object]],
+    *,
+    summary: dict[str, object],
+) -> str:
     framing = _axis_score(axis_map, "goal_framing") >= 2
     context = _axis_score(axis_map, "context_supply") >= 2
     execute = _axis_score(axis_map, "execution_preference") >= 2
     verify = _axis_score(axis_map, "verification_loop") >= 2
-
     opening = f"{display_name}，你的水平已经达到了{rank}级，{PROFILE_LEVEL_SUMMARY.get(rank, '当前任务已经能稳定推进')}，落实代码。"
+    dimension_summary_lines = _list_of_strings(summary.get("dimension_summary_lines"))
+    top_axis = summary.get("opening_axis") if isinstance(summary.get("opening_axis"), dict) else None
+    if not isinstance(top_axis, dict):
+        top_axis = next(iter([axis for axis in summary.get("top_axes", []) if isinstance(axis, dict)]), None)
+    summary_bits = dimension_summary_lines[:2]
+    if isinstance(top_axis, dict):
+        summary_bits.append(
+            f"当前最稳的是“{top_axis.get('label', top_axis.get('id', '维度'))}”，{top_axis.get('summary', '')}"
+        )
+    summary_text = " ".join(bit for bit in summary_bits if bit)
     if framing and context and execute and verify:
         return (
-            f"{opening} 你和 AI 对话时，起手就像在写一条可执行的 prompt："
+            f"{opening} {summary_text} 你和 AI 对话时，起手就像在写一条可执行的 prompt："
             "先把目标、边界、验收和交付物钉住，再把路径、文件、背景和样例交给 code agent，"
             "让它接手时不用反复猜上下文。"
         )
     if framing and context:
         return (
-            f"{opening} 你最突出的地方是 prompt 起手很稳。"
+            f"{opening} {summary_text} 你最突出的地方是 prompt 起手很稳。"
             "给 AI 下任务前，会先把目标和上下文摆好，让 code agent 一上来就知道先做什么。"
         )
-    return f"{opening} 你的习惯是先把任务主线说清，再让 AI 顺着结果继续往下做。"
+    return f"{opening} {summary_text} 你的习惯是先把任务主线说清，再让 AI 顺着结果继续往下做。"
 
 
-def _compose_workflow_paragraph(axis_map: dict[str, dict[str, object]]) -> str:
+def _compose_workflow_paragraph(
+    axis_map: dict[str, dict[str, object]],
+    *,
+    summary: dict[str, object],
+) -> str:
     tool = _axis_score(axis_map, "tool_orchestration") >= 2
     repair = _axis_score(axis_map, "iteration_repair") >= 2
     decompose = _axis_score(axis_map, "task_decomposition") >= 2
     autonomous = _axis_score(axis_map, "autonomous_push") >= 2
-
+    execution_axis = summary.get("execution_axis") if isinstance(summary.get("execution_axis"), dict) else None
+    if isinstance(execution_axis, dict):
+        return f"当前最稳的是“{execution_axis.get('label', execution_axis.get('id', '维度'))}”，{execution_axis.get('summary', '')}"
     if tool and repair and decompose:
         tail = "遇到偏差时，也更愿意补一条关键修正后继续推，不会把整轮工作打散重来。"
         if autonomous:
@@ -976,7 +1314,19 @@ def _compose_workflow_paragraph(axis_map: dict[str, dict[str, object]]) -> str:
     return "具体到执行层，你的对话节奏偏短回合、重落地，重点是先让 AI 做出结果，再按反馈继续改 prompt。"
 
 
-def _compose_impression_paragraph(axis_map: dict[str, dict[str, object]]) -> str:
+def _compose_impression_paragraph(
+    axis_map: dict[str, dict[str, object]],
+    *,
+    summary: dict[str, object],
+) -> str:
+    weak_axes = [axis for axis in summary.get("weak_axes", []) if isinstance(axis, dict)]
+    if weak_axes:
+        names = [f"“{axis.get('label', axis.get('id', '维度'))}”" for axis in weak_axes[:2]]
+        joined = "和".join(names)
+        return (
+            f"当前最该补的是{joined}，{weak_axes[0].get('summary', '')}"
+            " 每轮只动一个核心变量，守住其余条件，避免气机紊乱。"
+        )
     strong = []
     if _axis_score(axis_map, "goal_framing") >= 2:
         strong.append("先收束任务")

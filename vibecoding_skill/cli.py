@@ -281,9 +281,10 @@ def _build_analysis_result(args):
         messages=distill_messages,
         display_name=secondary_display_name,
         source=distill_source,
-        rank=str(insight_payload.get("rank") or payload.get("assistant_certificate", {}).get("level") or "L1"),
+        rank=str(insight_payload.get("rank") or ""),
         generated_at=generated_at,
         models=distill_models,
+        tool_calls=int(_distill_tool_calls(payload) or 0),
     )
     secondary_skill = payload["secondary_skill"] if isinstance(payload.get("secondary_skill"), dict) else {}
     if analysis is not None:
@@ -611,6 +612,13 @@ def _aggregate_to_json(aggregate: dict[str, object]) -> dict[str, object]:
     payload["user_certificate"] = _certificate_to_json(aggregate.get("user_certificate"))
     payload["assistant_certificate"] = _certificate_to_json(aggregate.get("assistant_certificate"))
     return payload
+
+
+def _distill_tool_calls(payload: dict[str, object]) -> int:
+    transcript = payload.get("transcript")
+    if isinstance(transcript, dict):
+        return int(transcript.get("tool_calls", 0) or 0)
+    return int(payload.get("total_tool_calls", 0) or 0)
 
 
 def _metric_to_json(metric) -> dict[str, object]:
