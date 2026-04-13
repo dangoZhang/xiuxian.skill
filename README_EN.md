@@ -45,10 +45,10 @@ Overall, this is already a strong way to drive AI work. The current strengths ar
 ## 1. What It Can Do
 
 - Read real collaboration logs.
-- Build a direct portrait first: use the raw trace to judge level, stage, strengths, and gaps.
+- Build the 16-axis distillation first: extract structured collaboration axes from the raw trace.
 - Distill vibecoding ability across 16 dimensions:
   goal framing, context supply, constraint governance, communication compression, execution preference, task decomposition, tool orchestration, context carry, iteration repair, failure recovery, verification loop, deliverable packaging, handoff memory, abstraction reuse, autonomous push, workflow orchestration.
-- Build an indirect portrait second: keep the direct portrait as the primary truth source, then use the 16-dimension distillation to supply tags, summary-page copy, and share-bundle styling.
+- Generate the report and portrait after that: the report is derived from the 16-axis result first, and the README hero panel / export profile are derived from the report instead of running a parallel primary model.
 - Judge level and stage, then generate a dedicated vibecoding capability profile.
 - Export a share bundle that turns your collaboration style into a capability others can share, showcase, and plug in immediately.
 - Load someone else's shared capability so AI can enter that working rhythm fast and keep the task moving in the same style.
@@ -133,8 +133,8 @@ Live response
 
 Notes:
 
-- This "distill my profile" flow is the direct portrait. The main judgment comes from the raw trace.
-- The README hero panel and exported profile page are indirect portraits, but they now reconcile to the direct portrait first and only use the 16-dimension model as a supporting layer.
+- This "distill my profile" flow first builds the 16-axis distillation, then turns that into the report text.
+- The README hero panel and exported profile page do not judge again. They reuse portrait fields derived from the report.
 
 ### 2. Share My Capability
 

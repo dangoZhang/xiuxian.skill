@@ -187,6 +187,7 @@ def _render_habit_section(insights: dict[str, object]) -> str:
 
 def _render_insights_section(insights: dict[str, object]) -> str:
     groups = [
+        ("### 16 维主判", insights.get("dimension_summary_lines")),
         ("### 你这边", insights.get("user_summary_lines")),
         ("### AI 这边", insights.get("assistant_summary_lines")),
         ("### 现代协作信号", insights.get("modern_signal_lines")),

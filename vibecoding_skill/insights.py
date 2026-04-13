@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from .models import Analysis, Certificate, Message
+from .secondary_skill import summarize_secondary_skill
 
 USER_BEHAVIOR_TEXT = {
     "目标清晰度": {
@@ -343,7 +344,11 @@ COACHING_PLAYBOOK = {
 }
 
 
-def build_analysis_insights(analysis: Analysis, target_level: str | None = None) -> dict[str, object]:
+def build_analysis_insights(
+    analysis: Analysis,
+    target_level: str | None = None,
+    secondary_skill: dict[str, object] | None = None,
+) -> dict[str, object]:
     return _build_insights(
         messages=analysis.transcript.messages,
         user_metrics=analysis.user_metrics,
@@ -354,10 +359,16 @@ def build_analysis_insights(analysis: Analysis, target_level: str | None = None)
         tool_calls=analysis.transcript.tool_calls,
         total_tokens=analysis.transcript.token_usage.total_tokens,
         target_level=target_level,
+        secondary_skill=secondary_skill,
     )
 
 
-def build_aggregate_insights(analyses: list[Analysis], aggregate: dict[str, object], target_level: str | None = None) -> dict[str, object]:
+def build_aggregate_insights(
+    analyses: list[Analysis],
+    aggregate: dict[str, object],
+    target_level: str | None = None,
+    secondary_skill: dict[str, object] | None = None,
+) -> dict[str, object]:
     messages = [message for analysis in analyses for message in analysis.transcript.messages]
     return _build_insights(
         messages=messages,
@@ -369,6 +380,7 @@ def build_aggregate_insights(analyses: list[Analysis], aggregate: dict[str, obje
         tool_calls=int(aggregate.get("total_tool_calls", 0) or 0),
         total_tokens=int(_as_dict(aggregate.get("token_usage")).get("total_tokens", 0) or 0),
         target_level=target_level,
+        secondary_skill=secondary_skill,
     )
 
 
@@ -383,11 +395,13 @@ def _build_insights(
     tool_calls: int,
     total_tokens: int,
     target_level: str | None,
+    secondary_skill: dict[str, object] | None,
 ) -> dict[str, object]:
     user_items = _metric_items(user_metrics)
     assistant_items = _metric_items(assistant_metrics)
     user_top, user_low = _top_and_low(user_items)
     assistant_top, assistant_low = _top_and_low(assistant_items)
+    secondary_summary = summarize_secondary_skill(secondary_skill or {})
     image_concepts = _image_concepts(messages)
     card_language = _card_language(messages)
 
@@ -401,39 +415,44 @@ def _build_insights(
     assistant_top_name = ASSISTANT_XIANXIA.get(assistant_top["name"], assistant_top["name"])
     assistant_low_name = ASSISTANT_XIANXIA.get(assistant_low["name"], assistant_low["name"])
 
-    ability_text = _compose_ability_summary(
-        level_text=level_ability_text,
-        user_top_name=user_top_name,
-        assistant_top_name=assistant_top_name,
-        user_low_name=user_low_name,
-        assistant_low_name=assistant_low_name,
-        user_top_text=_metric_behavior(user_top["name"], "strong", track="user"),
-        assistant_top_text=_metric_behavior(assistant_top["name"], "strong", track="assistant"),
-        user_low_text=_metric_behavior(user_low["name"], "weak", track="user"),
-        assistant_low_text=_metric_behavior(assistant_low["name"], "weak", track="assistant"),
-    )
-    card_ability_text = _compose_card_ability_summary(
-        level_text=card_level_ability_text,
-        user_top_name=user_top_name,
-        assistant_top_name=assistant_top_name,
-        user_low_name=user_low_name,
-        assistant_low_name=assistant_low_name,
-        user_top_text=_metric_card_behavior(user_top["name"], "strong", track="user"),
-        assistant_top_text=_metric_card_behavior(assistant_top["name"], "strong", track="assistant"),
-        user_low_text=_metric_card_behavior(user_low["name"], "weak", track="user"),
-        assistant_low_text=_metric_card_behavior(assistant_low["name"], "weak", track="assistant"),
-    )
-    card_ability_text_en = _compose_card_ability_summary_en(
-        level_text=_card_ability_text_en(rank),
-        user_top_name=_metric_label_en(user_top["name"], track="user"),
-        assistant_top_name=_metric_label_en(assistant_top["name"], track="assistant"),
-        user_low_name=_metric_label_en(user_low["name"], track="user"),
-        assistant_low_name=_metric_label_en(assistant_low["name"], track="assistant"),
-        user_top_text=_metric_card_behavior_en(user_top["name"], "strong", track="user"),
-        assistant_top_text=_metric_card_behavior_en(assistant_top["name"], "strong", track="assistant"),
-        user_low_text=_metric_card_behavior_en(user_low["name"], "weak", track="user"),
-        assistant_low_text=_metric_card_behavior_en(assistant_low["name"], "weak", track="assistant"),
-    )
+    if secondary_summary.get("top_axes"):
+        ability_text = _compose_axis_ability_summary(level_ability_text, secondary_summary)
+        card_ability_text = _compose_axis_card_summary(card_level_ability_text, secondary_summary)
+        card_ability_text_en = _compose_axis_card_summary_en(_card_ability_text_en(rank), secondary_summary)
+    else:
+        ability_text = _compose_ability_summary(
+            level_text=level_ability_text,
+            user_top_name=user_top_name,
+            assistant_top_name=assistant_top_name,
+            user_low_name=user_low_name,
+            assistant_low_name=assistant_low_name,
+            user_top_text=_metric_behavior(user_top["name"], "strong", track="user"),
+            assistant_top_text=_metric_behavior(assistant_top["name"], "strong", track="assistant"),
+            user_low_text=_metric_behavior(user_low["name"], "weak", track="user"),
+            assistant_low_text=_metric_behavior(assistant_low["name"], "weak", track="assistant"),
+        )
+        card_ability_text = _compose_card_ability_summary(
+            level_text=card_level_ability_text,
+            user_top_name=user_top_name,
+            assistant_top_name=assistant_top_name,
+            user_low_name=user_low_name,
+            assistant_low_name=assistant_low_name,
+            user_top_text=_metric_card_behavior(user_top["name"], "strong", track="user"),
+            assistant_top_text=_metric_card_behavior(assistant_top["name"], "strong", track="assistant"),
+            user_low_text=_metric_card_behavior(user_low["name"], "weak", track="user"),
+            assistant_low_text=_metric_card_behavior(assistant_low["name"], "weak", track="assistant"),
+        )
+        card_ability_text_en = _compose_card_ability_summary_en(
+            level_text=_card_ability_text_en(rank),
+            user_top_name=_metric_label_en(user_top["name"], track="user"),
+            assistant_top_name=_metric_label_en(assistant_top["name"], track="assistant"),
+            user_low_name=_metric_label_en(user_low["name"], track="user"),
+            assistant_low_name=_metric_label_en(assistant_low["name"], track="assistant"),
+            user_top_text=_metric_card_behavior_en(user_top["name"], "strong", track="user"),
+            assistant_top_text=_metric_card_behavior_en(assistant_top["name"], "strong", track="assistant"),
+            user_low_text=_metric_card_behavior_en(user_low["name"], "weak", track="user"),
+            assistant_low_text=_metric_card_behavior_en(assistant_low["name"], "weak", track="assistant"),
+        )
     verdict_lines = [
         f"这轮样本看下来，你现在处在{stage}，对应 {rank}。",
         _card_verdict(rank),
@@ -461,7 +480,7 @@ def _build_insights(
         user_low["name"],
         assistant_low["name"],
     )
-    habit_profile_lines = _build_habit_profile_lines(
+    habit_profile_lines = secondary_summary.get("habit_profile_lines") or _build_habit_profile_lines(
         user_top_name=user_top_name,
         assistant_top_name=assistant_top_name,
         user_low_name=user_low_name,
@@ -471,7 +490,7 @@ def _build_insights(
         user_low_text=_metric_behavior(user_low["name"], "weak", track="user"),
         assistant_low_text=_metric_behavior(assistant_low["name"], "weak", track="assistant"),
     )
-    mimic_lines = _build_mimic_lines(
+    mimic_lines = secondary_summary.get("mimic_lines") or _build_mimic_lines(
         user_top_name=user_top_name,
         assistant_top_name=assistant_top_name,
         user_low_name=user_low_name,
@@ -516,6 +535,9 @@ def _build_insights(
         "target_gap_lines": target_gap_lines,
         "target_drill_lines": target_drill_lines,
         "modern_signal_lines": modern_signal_lines,
+        "profile_tags": secondary_summary.get("tags", []),
+        "profile_bullets": secondary_summary.get("bullets", []),
+        "dimension_summary_lines": secondary_summary.get("dimension_summary_lines", []),
         "user_summary_lines": [
             f"你这轮最稳的是“{user_top_name}”，{user_top['rationale']}",
             f"最拖后腿的是“{user_low_name}”，{user_low['rationale']}",
@@ -526,7 +548,7 @@ def _build_insights(
             f"这轮蒸馏出来的 vibecoding 能力可以概括为：{level_ability_text}",
         ],
         "image_concepts": image_concepts,
-        "report_basis_lines": [
+        "report_basis_lines": secondary_summary.get("report_basis_lines", []) + [
             "单卡取材自：等级、能力摘要、短长板和真实会话规模。",
             "传播层重点是：大字等级、一眼能看懂的判断，以及下一轮最该补的动作。",
         ],
@@ -791,6 +813,45 @@ def _compose_card_ability_summary_en(
         f" The strongest signals in this window are {user_top_name} and {assistant_top_name}: you {user_top_text}, and the agent side {assistant_top_text}."
         f" The main blockers to the next level are {user_low_name} and {assistant_low_name}: you {user_low_text}, and the agent side {assistant_low_text}."
     )
+
+
+def _compose_axis_ability_summary(level_text: str, secondary_summary: dict[str, object]) -> str:
+    top_axes = [str(item.get("label", "")) for item in secondary_summary.get("top_axes", []) if isinstance(item, dict)]
+    weak_axes = [str(item.get("label", "")) for item in secondary_summary.get("weak_axes", []) if isinstance(item, dict)]
+    strong = "、".join(top_axes[:2])
+    weak = "、".join(weak_axes[:2])
+    text = level_text
+    if strong:
+        text += f" 这轮 16 维里最稳的是{strong}。"
+    if weak:
+        text += f" 当前最该补的是{weak}。"
+    return text
+
+
+def _compose_axis_card_summary(level_text: str, secondary_summary: dict[str, object]) -> str:
+    top_axes = [str(item.get("label", "")) for item in secondary_summary.get("top_axes", []) if isinstance(item, dict)]
+    weak_axes = [str(item.get("label", "")) for item in secondary_summary.get("weak_axes", []) if isinstance(item, dict)]
+    strong = "、".join(top_axes[:2])
+    weak = "、".join(weak_axes[:2])
+    text = level_text
+    if strong:
+        text += f" 当前强项是{strong}。"
+    if weak:
+        text += f" 下一步先补{weak}。"
+    return text
+
+
+def _compose_axis_card_summary_en(level_text: str, secondary_summary: dict[str, object]) -> str:
+    top_axes = [str(item.get("label", "")) for item in secondary_summary.get("top_axes", []) if isinstance(item, dict)]
+    weak_axes = [str(item.get("label", "")) for item in secondary_summary.get("weak_axes", []) if isinstance(item, dict)]
+    strong = ", ".join(top_axes[:2])
+    weak = ", ".join(weak_axes[:2])
+    text = level_text
+    if strong:
+        text += f" The strongest 16-axis signals are {strong}."
+    if weak:
+        text += f" The next gaps to fix are {weak}."
+    return text
 
 
 def _certificate_value(certificate, key: str, default: str) -> str:

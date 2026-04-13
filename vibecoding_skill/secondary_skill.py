@@ -216,6 +216,29 @@ TAG_LABELS = {
     "workflow_orchestration": "工作流化",
 }
 
+OPENING_AXIS_ORDER = [
+    "goal_framing",
+    "context_supply",
+    "constraint_governance",
+    "communication_compression",
+]
+EXECUTION_AXIS_ORDER = [
+    "execution_preference",
+    "task_decomposition",
+    "tool_orchestration",
+    "context_carry",
+    "iteration_repair",
+    "failure_recovery",
+    "autonomous_push",
+    "workflow_orchestration",
+]
+CLOSURE_AXIS_ORDER = [
+    "verification_loop",
+    "deliverable_packaging",
+    "handoff_memory",
+    "abstraction_reuse",
+]
+
 AXIS_PATTERNS = {
     "goal_framing": [r"目标", r"边界", r"验收", r"输出物?", r"结果", r"起手", r"先.*?(确认|说清|整理)", r"帮我.*总结"],
     "context_supply": [r"/", r"路径", r"文件", r"仓库", r"背景", r"样例", r"示例", r"时间窗", r"历史", r"记录", r"session", r"jsonl"],
@@ -407,18 +430,71 @@ def build_readme_profile_panel(source: dict[str, object]) -> dict[str, object]:
         or "你"
     )
     facts = _build_profile_facts(display_name, rank, axis_map, insights=insights)
+    insight_tags = _list_of_strings((insights or {}).get("profile_tags"))
+    insight_bullets = _list_of_strings((insights or {}).get("profile_bullets"))
 
     panel = {
         "title": "你怎么和 AI 协作",
         "display_name": display_name,
         "rank": rank,
-        "tags": _readme_tags(axis_map),
+        "tags": insight_tags or _readme_tags(axis_map),
         "facts": facts,
         "paragraphs": _render_profile_paragraphs(facts),
-        "bullets": _readme_bullets(axis_map),
+        "bullets": insight_bullets or _readme_bullets(axis_map),
     }
     panel["llm_prompt"] = _build_profile_llm_prompt(panel)
     return panel
+
+
+def summarize_secondary_skill(distillation: dict[str, object]) -> dict[str, object]:
+    axes = distillation.get("axes") if isinstance(distillation, dict) else []
+    if not isinstance(axes, list):
+        axes = []
+    axis_map = {axis.get("id"): axis for axis in axes if isinstance(axis, dict) and axis.get("id")}
+    opening_axis = _pick_axis(axis_map, OPENING_AXIS_ORDER)
+    execution_axis = _pick_axis(axis_map, EXECUTION_AXIS_ORDER)
+    closure_axis = _pick_axis(axis_map, CLOSURE_AXIS_ORDER)
+    top_axes = _sorted_axes(axis_map)
+    weak_axes = _sorted_weak_axes(axis_map)
+    habit_profile_lines = [
+        _habit_line("起手习惯", opening_axis, "开局通常先把这部分讲稳，再让 agent 接手。"),
+        _habit_line("推进习惯", execution_axis, "进入执行后会持续按这类动作往前推。"),
+        _weak_habit_line(weak_axes[:2]),
+    ]
+    mimic_lines = [
+        _mimic_line(opening_axis, execution_axis),
+        _mimic_risk_line(weak_axes[:2]),
+    ]
+    report_basis_lines = [
+        "主判断链路：先做 16 维蒸馏，再由蒸馏结果生成报告，最后由报告派生 README / 导出包画像。",
+        "长历史样本会保留用户 prompt 原文，AI 回复只做取头压缩；tool、token 和验证证据只在总报告层回收。",
+    ]
+    dimension_summary_lines = []
+    if top_axes:
+        dimension_summary_lines.append(
+            f"16 维里最稳的是“{top_axes[0]['label']}”"
+            + (f"，其次是“{top_axes[1]['label']}”" if len(top_axes) > 1 else "")
+            + "。"
+        )
+    if weak_axes:
+        dimension_summary_lines.append(
+            f"当前最该补的是“{weak_axes[0]['label']}”"
+            + (f" 和 “{weak_axes[1]['label']}”" if len(weak_axes) > 1 else "")
+            + "。"
+        )
+    return {
+        "tags": _readme_tags(axis_map),
+        "bullets": _readme_bullets(axis_map),
+        "top_axes": top_axes[:4],
+        "weak_axes": weak_axes[:4],
+        "opening_axis": opening_axis,
+        "execution_axis": execution_axis,
+        "closure_axis": closure_axis,
+        "habit_profile_lines": [line for line in habit_profile_lines if line],
+        "mimic_lines": [line for line in mimic_lines if line],
+        "report_basis_lines": report_basis_lines,
+        "dimension_summary_lines": dimension_summary_lines,
+    }
 
 
 def _panel_sources(source: dict[str, object]) -> tuple[dict[str, object], dict[str, object]]:
@@ -435,6 +511,83 @@ def _dict_get(source: object, key: str) -> object:
     if isinstance(source, dict):
         return source.get(key)
     return None
+
+
+def _pick_axis(axis_map: dict[str, dict[str, object]], axis_ids: list[str]) -> dict[str, object] | None:
+    candidates = [
+        axis_map[axis_id]
+        for axis_id in axis_ids
+        if axis_id in axis_map and int(axis_map[axis_id].get("score", 0) or 0) > 0
+    ]
+    if not candidates:
+        return None
+    candidates.sort(
+        key=lambda axis: (
+            -int(axis.get("score", 0) or 0),
+            -float(axis.get("weighted_evidence_count", 0.0) or 0.0),
+            axis_ids.index(str(axis.get("id"))),
+        )
+    )
+    return candidates[0]
+
+
+def _sorted_axes(axis_map: dict[str, dict[str, object]]) -> list[dict[str, object]]:
+    return sorted(
+        [axis for axis in axis_map.values() if int(axis.get("score", 0) or 0) > 0],
+        key=lambda axis: (
+            -int(axis.get("score", 0) or 0),
+            -float(axis.get("weighted_evidence_count", 0.0) or 0.0),
+            str(axis.get("id") or ""),
+        ),
+    )
+
+
+def _sorted_weak_axes(axis_map: dict[str, dict[str, object]]) -> list[dict[str, object]]:
+    positive = [axis for axis in axis_map.values() if int(axis.get("score", 0) or 0) > 0]
+    if positive:
+        return sorted(
+            positive,
+            key=lambda axis: (
+                int(axis.get("score", 0) or 0),
+                float(axis.get("weighted_evidence_count", 0.0) or 0.0),
+                str(axis.get("id") or ""),
+            ),
+        )
+    return sorted(axis_map.values(), key=lambda axis: str(axis.get("id") or ""))
+
+
+def _habit_line(prefix: str, axis: dict[str, object] | None, fallback: str) -> str:
+    if not axis:
+        return f"{prefix}：{fallback}"
+    summary = str(axis.get("summary") or "").strip()
+    return f"{prefix}：当前最稳的是“{axis.get('label', axis.get('id', '维度'))}”，{summary}"
+
+
+def _weak_habit_line(axes: list[dict[str, object]]) -> str:
+    if not axes:
+        return "容易掉点的地方：当前样本还不够多，先继续积累长回合记录。"
+    names = [f"“{axis.get('label', axis.get('id', '维度'))}”" for axis in axes[:2]]
+    joined = "和".join(names)
+    first_summary = str(axes[0].get("summary") or "").strip()
+    return f"容易掉点的地方：当前最该补的是{joined}，{first_summary}"
+
+
+def _mimic_line(opening_axis: dict[str, object] | None, execution_axis: dict[str, object] | None) -> str:
+    if opening_axis and execution_axis:
+        return (
+            f"如果要复刻这套习惯，先把“{opening_axis.get('label', opening_axis.get('id', '起手维度'))}”说稳，"
+            f"再按“{execution_axis.get('label', execution_axis.get('id', '执行维度'))}”的节奏继续推进。"
+        )
+    return "如果要复刻这套习惯，开局先把目标和上下文讲稳，再继续执行。"
+
+
+def _mimic_risk_line(axes: list[dict[str, object]]) -> str:
+    if not axes:
+        return "模仿时先守住主线，别在样本太少时过度总结。"
+    return (
+        f"模仿时最要避免的是“{axes[0].get('label', axes[0].get('id', '短板维度'))}”掉线；"
+        "每轮结束都回看一次偏差和验证。"
+    )
 
 
 def _precompute_axis_matches(compressed: list[dict[str, str]]) -> list[set[str]]:

@@ -133,7 +133,7 @@ def _render_readme(payload: dict[str, object], result_skill_name: str, result_sk
             "",
             "## 这套习惯的摘要",
             "",
-            "- 画像来源：先对齐主报告里的直接画像结论，再用 16 维蒸馏补标签和摘要页文案。",
+            "- 画像来源：先做 16 维蒸馏，再由主报告生成画像字段；README 和共享页只复用报告结果。",
             f"- 等级：`{rank}`",
             f"- 判断：{ability}",
         ]

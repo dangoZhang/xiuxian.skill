@@ -4,7 +4,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from vibecoding_skill.models import Message
+from vibecoding_skill.insights import build_analysis_insights
+from vibecoding_skill.models import Analysis, Certificate, Message, MetricScore, Persona, Transcript
 from vibecoding_skill.cards import build_card_data, render_vibecoding_card
 from vibecoding_skill.exporter import export_bundle
 from vibecoding_skill.readme_sync import replace_marked_section
@@ -184,6 +185,65 @@ class SecondarySkillDistillationTests(unittest.TestCase):
         self.assertIn("你已经能把常见任务沿着上下文稳定推到多步完成", panel["paragraphs"][0])
         self.assertIn("能先动手，再汇报", panel["paragraphs"][1])
         self.assertIn("下一步最该补的是偏了之后的修正速度", panel["paragraphs"][2])
+
+    def test_panel_uses_report_derived_tags_and_bullets(self) -> None:
+        payload = {
+            "display_name": "码奸",
+            "insights": {
+                "rank": "L4",
+                "ability_text": "你已经能把常见任务沿着上下文稳定推到多步完成。",
+                "habit_profile_lines": [
+                    "起手习惯：当前最稳的是“目标 framing”，起手偏好先说清目标、边界和验收，再让 agent 接手执行。",
+                    "推进习惯：当前最稳的是“工具编排”，倾向让 agent 读文件、跑命令、查日志、落脚本，而不是停在口头判断。",
+                    "容易掉点的地方：当前最该补的是“交接与记忆”，当前记录里，交接与记忆信号还不够稳定。",
+                ],
+                "breakthrough_lines": ["下一轮先补交接与记忆。"],
+                "profile_tags": ["报告派生标签"],
+                "profile_bullets": ["报告派生要点。"],
+            },
+            "secondary_skill": {
+                "display_name": "码奸",
+                "rank": "L4",
+                "axes": [
+                    {"id": "goal_framing", "score": 4},
+                    {"id": "context_supply", "score": 4},
+                    {"id": "verification_loop", "score": 4},
+                    {"id": "tool_orchestration", "score": 4},
+                ],
+            },
+        }
+
+        panel = build_readme_profile_panel(payload)
+        self.assertEqual(panel["tags"], ["报告派生标签"])
+        self.assertEqual(panel["bullets"], ["报告派生要点。"])
+
+    def test_insights_can_be_derived_from_secondary_skill_summary(self) -> None:
+        transcript = Transcript(
+            source="codex",
+            path=Path("demo.jsonl"),
+            display_name="码奸",
+            messages=[Message(role="user", text="目标、边界、验收写清楚。"), Message(role="assistant", text="我先读文件再验证。")],
+        )
+        analysis = Analysis(
+            transcript=transcript,
+            user_metrics=[MetricScore("目标清晰度", 4, "目标很清楚。"), MetricScore("上下文供给", 3, "上下文较完整。"), MetricScore("迭代修正力", 2, "修正一般。"), MetricScore("验收意识", 3, "会要验证。"), MetricScore("协作节奏", 3, "节奏稳定。")],
+            assistant_metrics=[MetricScore("执行落地", 4, "执行很强。"), MetricScore("工具调度", 3, "会读文件。"), MetricScore("验证闭环", 3, "会验证。"), MetricScore("上下文承接", 2, "承接一般。"), MetricScore("补救适配", 2, "补救一般。")],
+            user_certificate=Certificate("user", "用户", "筑基", 42, Persona("t", "s", [], "sum"), [], []),
+            assistant_certificate=Certificate("assistant", "AI", "L4", 42, Persona("t", "s", [], "sum"), [], []),
+            overview="demo",
+        )
+        secondary = build_secondary_skill_distillation(
+            messages=transcript.messages,
+            display_name="码奸",
+            source="codex",
+            rank="L4",
+            generated_at="2026-04-14 12:00",
+        )
+
+        insights = build_analysis_insights(analysis, secondary_skill=secondary)
+        self.assertTrue(insights["dimension_summary_lines"])
+        self.assertTrue(insights["report_basis_lines"])
+        self.assertIn("16 维蒸馏", " ".join(insights["report_basis_lines"]))
 
     def test_xianxia_card_uses_realm_and_sect_labels(self) -> None:
         payload = {

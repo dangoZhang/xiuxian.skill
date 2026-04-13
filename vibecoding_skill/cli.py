@@ -216,10 +216,8 @@ def _build_analysis_result(args):
         if distilled.kind == "single":
             analysis = distilled.analysis
             payload = _to_json(analysis)
-            payload["insights"] = build_analysis_insights(analysis, target_level=target_level)
         else:
             aggregate = distilled.aggregate
-            aggregate["insights"] = build_aggregate_insights(distilled.analyses or [], aggregate, target_level=target_level)
             aggregate["display_name"] = transcript.display_name
             payload = _aggregate_to_json(aggregate)
         scope_kind = "path"
@@ -242,7 +240,6 @@ def _build_analysis_result(args):
         distilled = analyze_many_with_chunking(transcripts, min_messages=args.min_messages)
         aggregate = distilled.aggregate
         pooled_analyses = distilled.analyses or []
-        aggregate["insights"] = build_aggregate_insights(pooled_analyses, aggregate, target_level=target_level)
         aggregate["display_name"] = _resolve_display_name_from_transcripts(transcripts, override=args.username, track=certificate_choice)
         aggregate["time_window"] = {
             "since": args.since,
@@ -266,10 +263,8 @@ def _build_analysis_result(args):
         if distilled.kind == "single":
             analysis = distilled.analysis
             payload = _to_json(analysis)
-            payload["insights"] = build_analysis_insights(analysis, target_level=target_level)
         else:
             aggregate = distilled.aggregate
-            aggregate["insights"] = build_aggregate_insights(distilled.analyses or [], aggregate, target_level=target_level)
             aggregate["display_name"] = transcript.display_name
             payload = _aggregate_to_json(aggregate)
         scope_kind = "latest"
@@ -286,10 +281,25 @@ def _build_analysis_result(args):
         messages=distill_messages,
         display_name=secondary_display_name,
         source=distill_source,
-        rank=str(insight_payload.get("rank") or "L1"),
+        rank=str(insight_payload.get("rank") or payload.get("assistant_certificate", {}).get("level") or "L1"),
         generated_at=generated_at,
         models=distill_models,
     )
+    secondary_skill = payload["secondary_skill"] if isinstance(payload.get("secondary_skill"), dict) else {}
+    if analysis is not None:
+        payload["insights"] = build_analysis_insights(
+            analysis,
+            target_level=target_level,
+            secondary_skill=secondary_skill,
+        )
+    else:
+        aggregate["insights"] = build_aggregate_insights(
+            distilled.analyses or [],
+            aggregate,
+            target_level=target_level,
+            secondary_skill=secondary_skill,
+        )
+        payload["insights"] = aggregate["insights"]
     if latest_terms:
         payload["latest_terms"] = latest_terms
     snapshot_source = _payload_source(payload, fallback=source)
